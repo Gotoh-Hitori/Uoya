@@ -1,0 +1,10 @@
+/** Display-only interpolation. It never claims a lease or completes an activity. */
+export function createMotionFollower({motion,ready,startPose,cancelPose}){
+ let epoch=null,seq=-1,remote=null,pose=null,first=true,received=0;const retired=new Set();
+ function clear(){remote=null;pose=null;first=true;}
+ function accept(packet,follow=true){if(!packet||!Number.isFinite(packet.position?.x)||!Number.isFinite(packet.position?.z)||typeof packet.epoch!=='string'||!Number.isSafeInteger(packet.seq))return false;if(epoch!==packet.epoch){if(retired.has(packet.epoch))return false;if(epoch)retired.add(epoch);epoch=packet.epoch;seq=-1;first=true;}if(packet.seq<=seq)return false;seq=packet.seq;if(!follow)return true;remote=packet;received=performance.now();if(first||Math.hypot(motion.position.x-packet.position.x,motion.position.z-packet.position.z)>2){motion.position.x=packet.position.x;motion.position.z=packet.position.z;motion.heading=packet.heading||0;first=false;}return true;}
+ function update(dt){if(!remote)return;const p=motion.position,target=remote.position,blend=1-Math.exp(-18*Math.min(.1,Math.max(0,dt))),x=p.x+(target.x-p.x)*blend,z=p.z+(target.z-p.z)*blend;if(motion.nav?.world&&!motion.nav.world.isWalkable(x,z)){p.x=target.x;p.z=target.z;}else{p.x=x;p.z=z;}if(Math.hypot(target.x-p.x,target.z-p.z)<.002){p.x=target.x;p.z=target.z;}const diff=Math.atan2(Math.sin((remote.heading||0)-motion.heading),Math.cos((remote.heading||0)-motion.heading));motion.heading+=diff*blend;motion.moving=Math.hypot(target.x-p.x,target.z-p.z)>.01||remote.moving&&performance.now()-received<1500;
+  const desired=remote.activity?.furniture||null;if(desired!==pose&&ready()){if(pose)cancelPose();pose=null;if(desired){try{if(startPose(desired)!==false)pose=desired;}catch{}}}
+ }
+ return {accept,update,clear,get following(){return !!remote;},get pose(){return pose;},get path(){return remote?.path||[];},get manualMoving(){return remote?.mode==='manual'&&remote.moving&&performance.now()-received<1500;}};
+}

@@ -1,3 +1,4 @@
+import {readRecording,transcribeRecording,createSpeechBudget} from './speech.mjs';
 import {createChatUploads} from './uploads.mjs';
 import {createGroupManagement} from './group-management.mjs';
 import {createRuntimeJournal} from './runtime-journal.mjs';
@@ -25,6 +26,7 @@ try{initializeAdmin(db,process.env);}catch(error){db.close();throw error;}
 const membership=createMembership({config,db});
 const group=createGroupManagement({config});
 const uploads=createChatUploads({config});
+const speechBudget=createSpeechBudget({config});
 const journal=createRuntimeJournal({config,db});
 const aiSettings=createAiSettings({config});
 const spaceConfig=new Proxy(config,{get:(target,key)=>aiSettings.effective(null)[key]});
@@ -122,7 +124,7 @@ life.subscribe(event=>{
   if(recipients)for(const response of recipients)writeEvent(response,'life_event',{event});
  }
 });
-const avatar=createAvatarAutonomy({life,config:spaceConfig,memory,readPersona:()=>persona,onEvent:(status,plan)=>{journal.action(status,plan);if(plan.source==='chat')broadcast('avatar_action',{actionId:plan.id,status,label:plan.label||plan.command?.type,messageId:plan.context?.replyToMessageId,requestedBy:plan.context?.requestedBy});},withContext:journal.withContext});
+const avatar=createAvatarAutonomy({life,config:spaceConfig,memory,readPersona:()=>persona,onMotion:motion=>broadcast('avatar_motion',{motion}),onEvent:(status,plan)=>{journal.action(status,plan);if(plan.source==='chat')broadcast('avatar_action',{actionId:plan.id,status,label:plan.label||plan.command?.type,messageId:plan.context?.replyToMessageId,requestedBy:plan.context?.requestedBy});},withContext:journal.withContext});
 const embodiedLife={...life,tools:[...life.tools,...avatar.tools],context:()=>life.context()+'\n角色控制：'+avatar.context(),executeTool:(name,args,trace)=>journal.withContext(trace,async()=>{
  try{if(trace?.requestedBy&&db.allUsers().find(u=>u.id===trace.requestedBy.id)?.role!=='admin')throw Object.assign(Error('仅空间管理员可控制角色活动'),{status:403});if(name==='life_use_item'&&(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(k=>k!=='itemId')))throw Error('Invalid use-item arguments');const result=name==='life_use_item'?await avatar.enqueueUse(args.itemId,trace):name.startsWith('avatar_')?await avatar.executeTool(name,args,trace):await life.executeTool(name,args,trace);journal.log('tool',(trace.requestedBy?.displayName||'用户')+' 请求的 AI 工具 '+name+'：'+(result.status||'成功'),{...trace,tool:name,status:result.status||'completed'},'tool:'+trace.requestId);return result;}
  catch(error){journal.log('tool','AI 工具 '+name+' 失败：'+error.message,{...trace,tool:name,status:'failed'},'tool:'+trace.requestId);throw error;}
@@ -166,7 +168,7 @@ const server = http.createServer(async (req,res) => {
     }
     if(pathname.startsWith('/api/admin/group/')){
      const me=requireAuth(req,res);if(!me)return;if(me.role!=='admin')return failure(res,403,'仅空间管理员可管理群聊');
-     if(!rate('group:'+me.id,120,60000))return failure(res,429,'操作过于频繁');
+     
      if(pathname==='/api/admin/group/members'&&req.method==='GET')return sendJson(res,200,group.list(me));
      if(pathname==='/api/admin/group/manage'&&req.method==='POST'){
       const body=await readJson(req),result=group.manage(me,body);journal.log('moderation',me.display_name+' '+body.action+' '+result.member.displayName,{actorId:me.id,targetId:body.userId,action:body.action});
@@ -186,8 +188,20 @@ const server = http.createServer(async (req,res) => {
      if(pathname.endsWith('/review')&&req.method==='POST'){const result=membership.review(me,await readJson(req));broadcast('members',{members:db.allUsers()});return sendJson(res,200,result);}
      return failure(res,405,'请求方式不支持');
     }
+    if(pathname==='/api/me/password'){
+      const me=requireAuth(req,res);if(!me)return;
+      if(req.method!=='POST')return failure(res,405,'请求方式不支持');
+      if(!rate('password:'+me.id,8,15*60000))return failure(res,429,'密码验证次数过多，请稍后重试');
+      const body=await readJson(req,4096);
+      if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['currentPassword','newPassword'].includes(k))||!validPassword(body.currentPassword)||!validPassword(body.newPassword))return failure(res,400,'密码需为 8–128 位');
+      db.changePassword(me.id,body.currentPassword,body.newPassword);
+      aiWorker.cancelUser(me.id);
+      for(const stream of [...(subscribers.get(me.id)||[])]){writeEvent(stream,'session_revoked',{reason:'password_changed'});stream.end();}
+      journal.log('account',me.display_name+' 修改了密码',{actorId:me.id});
+      return sendJson(res,200,{ok:true,message:'密码已修改，请重新登录'},{'Set-Cookie':sessionCookie('',true,req)});
+    }
     if(pathname==='/api/me/profile'&&req.method==='PUT'){
-     const me=requireAuth(req,res);if(!me)return;if(!rate('profile:'+me.id,15,60000))return failure(res,429,'操作过于频繁');
+     const me=requireAuth(req,res);if(!me)return;
      const user=db.updateProfile(me.id,validateProfile(await readJson(req,300000)));broadcast('member_profile_changed',{user});broadcast('members',{members:db.allUsers()});return sendJson(res,200,{user});
     }
     if(pathname==='/api/ai-profile'){
@@ -195,12 +209,12 @@ const server = http.createServer(async (req,res) => {
      if(req.method==='GET')return sendJson(res,200,{profile});
      if(req.method!=='PUT')return failure(res,405,'请求方式不支持');
      if(me.role!=='admin')return failure(res,403,'仅空间管理员可修改 AI 资料');
-     if(!rate('ai-profile:'+me.id,15,60000))return failure(res,429,'操作过于频繁');
+     
      const saved=identity.save(me,await readJson(req,300000));broadcast('ai_profile_changed',{profile:saved});return sendJson(res,200,{profile:saved});
     }
     if(pathname==='/api/ai-settings'||pathname==='/api/ai-settings/test'){
      const me=requireAuth(req,res);if(!me)return;
-     if(!rate('ai-settings:'+me.id,30,60000))return failure(res,429,'设置操作过于频繁');
+     
      if(req.method==='GET'&&pathname==='/api/ai-settings')return sendJson(res,200,aiSettings.describe(me));
      if(!['PUT','POST','DELETE'].includes(req.method))return failure(res,405,'请求方式不支持');
      const body=await readJson(req);if(!body||typeof body!=='object'||Array.isArray(body))return failure(res,400,'设置格式无效');let result;
@@ -213,14 +227,14 @@ const server = http.createServer(async (req,res) => {
     }
      if(pathname.startsWith('/api/admin/console/')){
      const me=requireAuth(req,res);if(!me)return;if(me.role!=='admin')return failure(res,403,'仅空间管理员可用');
-     if(!rate('console:'+me.id,120,60000))return failure(res,429,'操作过于频繁');
+     
      if(pathname==='/api/admin/console/status'&&req.method==='GET')return sendJson(res,200,adminConsole.status(me));
      if(pathname==='/api/admin/console/command'&&req.method==='POST')return sendJson(res,200,await adminConsole.execute(me,await readJson(req)));
      return failure(res,404,'控制台接口不存在');
     }
     if(pathname.startsWith('/api/autonomy/')){
      const me=requireAuth(req,res);if(!me)return;
-     if(!rate('autonomy:'+me.id,240,60000))return failure(res,429,'同步过于频繁');
+     
      const route=pathname.slice('/api/autonomy/'.length);
      if(route==='state'&&req.method==='GET')return sendJson(res,200,{...avatar.getState(me,new URL(req.url,'http://localhost').searchParams.get('clientId')||''),canControl:me.role==='admin'});
      if(me.role!=='admin')return failure(res,403,'仅空间管理员可控制角色');
@@ -228,9 +242,9 @@ const server = http.createServer(async (req,res) => {
      const body=await readJson(req);if(!body||typeof body!=='object'||Array.isArray(body))return failure(res,400,'参数无效');
      let result;
      if(route==='claim')result=await avatar.claim(me,body.clientId);
-     else if(['heartbeat','arrive','complete','release'].includes(route))result=avatar[route](me,body);
+     else if(['heartbeat','arrive','complete','release','syncManual'].includes(route))result=avatar[route](me,body);
      else if(route==='fail')result=avatar.failPlan(me,body);
-     else if(route==='suspend')result=avatar.suspend('手动接管');
+     else if(route==='suspend')result=avatar.suspend('手动接管',me,body);
      else if(route==='config'){if(body.enabled!==undefined)avatar.setEnabled(body.enabled);result=avatar.getState(me,body.clientId);}
      else return failure(res,404,'角色接口不存在');
      return sendJson(res,200,result);
@@ -239,6 +253,7 @@ const server = http.createServer(async (req,res) => {
     if (pathname === '/api/health' && req.method==='GET') return sendJson(res,200,{ ok:true, service:'bluehaven-chat-api', now:Date.now(),memory:{enabled:memory.getStatus().enabled,ready:memory.getStatus().ready,provider:'LongMemory'} });
     if (pathname === '/api/config' && req.method==='GET') {const active=aiSettings.effective(currentUser(req)?.id);return sendJson(res,200,{
       aiName: config.aiName, aiMode: active.aiMode, aiTriggerMode: active.aiTriggerMode,
+      speech:{asr:!!(config.asrEnabled&&config.asrUrl&&config.asrModel&&config.asrApiKey),maxSeconds:120,maxBytes:8*1024*1024,dailyRequests:config.speechDailyRequests},
       tts: { browser:true, server:config.ttsEnabled }, profile, memory:{enabled:memory.getStatus().enabled,ready:memory.getStatus().ready,provider:'LongMemory'},
     });
     }
@@ -349,7 +364,7 @@ const server = http.createServer(async (req,res) => {
       const me=requireAuth(req,res); if(!me)return;
       if (me.role!=='admin') return failure(res,403,'仅管理员可编辑人格');
       if (req.method==='GET') return sendJson(res,200,{persona});
-      if (!rate(`persona:${me.id}`,6,60_000)) return failure(res,429,'修改过于频繁');
+      
       const data=await readJson(req);
       if(typeof data.persona!=='string'||data.persona.length<40||data.persona.length>10000) return failure(res,400,'人格设定需为 40–10000 字符');
       const updated=data.persona.trim();
@@ -357,6 +372,17 @@ const server = http.createServer(async (req,res) => {
       persona=updated;
       broadcast('persona_updated',{by:me.display_name});
       return sendJson(res,200,{ok:true});
+    }
+    if(pathname==='/api/ai/stop'&&req.method==='POST'){
+      const me=requireAuth(req,res);if(!me)return;group.assertMember(me.id);
+      const data=await readJson(req);if(!Number.isSafeInteger(data.runId)||data.runId<1)return failure(res,400,'回复标识无效');
+      return sendJson(res,200,{stopped:aiWorker.stopRun(me,data.runId)});
+    }
+    if(pathname==='/api/speech/transcribe'&&req.method==='POST'){
+      const me=requireAuth(req,res);if(!me)return;group.assertBudget(me.id);
+      if(!config.asrEnabled||!config.asrUrl||!config.asrModel||!config.asrApiKey)return failure(res,503,'管理员尚未配置语音输入');
+      const bytes=await readRecording(req),release=speechBudget.reserve(me.id);
+      try{return sendJson(res,200,{text:await transcribeRecording(config,bytes)});}finally{release();}
     }
     if (pathname === '/api/tts' && req.method==='POST') {
       const me=requireAuth(req,res); if(!me)return;
@@ -366,7 +392,8 @@ const server = http.createServer(async (req,res) => {
       if (!Number.isInteger(data.messageId)||data.messageId<=0) return failure(res,400,'无效的消息 ID');
       const message=db.getMessage(data.messageId);
       if(!message||message.role!=='ai') return failure(res,404,'只能朗读 AI 消息');
-      const buffer=await requestTts(config,message.content);
+      group.assertBudget(me.id);const release=speechBudget.reserve(me.id);let buffer;
+      try{buffer=await requestTts(config,message.content);}finally{release();}
       res.writeHead(200,{ 'Content-Type':'audio/mpeg', 'Content-Length':buffer.length, 'Cache-Control':'private, max-age=120' });
       res.end(buffer);return;
     }
@@ -392,7 +419,7 @@ for (const signal of ['SIGINT','SIGTERM']) {
     console.log(`Received ${signal}, shutting down`);
     aiWorker.close();
     for(const clients of subscribers.values())for(const res of clients)res.end();
-    server.close(async()=>{try{journal.close();uploads.close();group.close();membership.close();aiSettings.close();adminConsole.close();avatar.close();await memory.close();life.close();db.close();process.exit(0);}catch(error){console.error('Memory shutdown failed:',error.message);process.exit(1);}});
+    server.close(async()=>{try{journal.close();uploads.close();speechBudget.close();group.close();membership.close();aiSettings.close();adminConsole.close();avatar.close();await memory.close();life.close();db.close();process.exit(0);}catch(error){console.error('Memory shutdown failed:',error.message);process.exit(1);}});
     setTimeout(()=>process.exit(1),8000).unref();
   });
 }

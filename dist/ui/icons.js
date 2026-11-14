@@ -7,8 +7,8 @@ function markup(name){const safe=Object.hasOwn(paths,name)?name:'gift';return '<
 function element(name){const template=document.createElement('template');template.innerHTML=markup(name);return template.content.firstElementChild;}
 function product(item){const name=(Object.hasOwn(paths,item?.emoji)?item.emoji:glyphs[item?.emoji])||({food:'food',drink:'drink',snack:'snack',toy:'toy'})[item?.category]||'gift';return markup(name);}
 globalThis.UoyaIcons=Object.freeze({markup,element,product});
-const slots='.blue-icon,.agent-icon,.auth-symbol,.mini-ai-icon,.msg-avatar.ai,.latest-message-avatar,.product-emoji,.inventory-icon,.stat-icon,.coin-medallion,.brandIcon,.ai-avatar,.tip-icon,.account-arrow,.header-channel-icon,.mood-chip,.product-price,.ai-wallet,summary';
-const exclude='svg,script,style,textarea,input,option,pre,code,.msg-content,.latest-message-content,[contenteditable=true]';
+const slots='.blue-icon,.auth-symbol,.mini-ai-icon,.msg-avatar.ai,.latest-message-avatar,.product-emoji,.inventory-icon,.stat-icon,.coin-medallion,.brandIcon,.ai-avatar,.tip-icon,.account-arrow,.header-channel-icon,.mood-chip,.product-price,.ai-wallet,summary';
+const exclude='.agent-icon,.logo,svg,script,style,textarea,input,option,pre,code,.msg-content,.latest-message-content,[contenteditable=true]';
 const pattern=new RegExp(Object.keys(glyphs).sort((a,b)=>b.length-a.length).map(s=>s.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')).join('|'),'gu');
 function convert(el){
  if(!el?.matches||el.closest(exclude))return;

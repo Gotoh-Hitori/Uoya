@@ -64,7 +64,7 @@ function speak(message,{chat=false,activity=false}={}){
  clearTimeout(speak.timeout);speak.timeout=setTimeout(()=>{item.hidden=true;speak.chatUntil=0;},duration);
 }
 const latestMessage=createLatestMessage();
-const socialChat=createSocialChat({onMediaChange:()=>{el('send-command').disabled=!!el('command-input').disabled||el('send-command').dataset.sending==='true'||socialChat.mediaBusy;},onMemberProfile:user=>latestMessage.updateMember(user),onMessage:message=>latestMessage.show(message),onProfile:profile=>latestMessage.setProfile(profile),onReset:()=>latestMessage.clear(),onLifeEvent:event=>lifeUI?.lifeEvent(event),onAuthChange:()=>{lifeUI?.authChanged();void refreshPermissions();},onReply:text=>speak(text,{chat:true}),onError:message=>toast(message,true),onOpen:()=>{Object.keys(keys).forEach(k=>keys[k]=false);}});
+const socialChat=createSocialChat({onAvatarMotion:packet=>brain?.receiveMotion(packet),onMediaChange:()=>{el('send-command').disabled=!!el('command-input').disabled||el('send-command').dataset.sending==='true'||socialChat.mediaBusy;},onMemberProfile:user=>latestMessage.updateMember(user),onMessage:message=>latestMessage.show(message),onProfile:profile=>latestMessage.setProfile(profile),onReset:()=>latestMessage.clear(),onLifeEvent:event=>lifeUI?.lifeEvent(event),onAuthChange:()=>{lifeUI?.authChanged();void refreshPermissions();},onReply:text=>speak(text,{chat:true}),onError:message=>toast(message,true),onOpen:()=>{Object.keys(keys).forEach(k=>keys[k]=false);}});
 lifeUI=createLifeUI({onAiUse:item=>{const verb=item.category==='drink'?'喝了':item.category==='toy'?'玩了':item.category==='food'||item.category==='snack'?'吃了':'使用了';speak(verb+' '+item.name,{activity:true});},onLogin:()=>socialChat.open(),onNotice:toast,onOpen:()=>{Object.keys(keys).forEach(k=>keys[k]=false);}});
 brain=createAvatarBrain({api,motion,ready:()=>!!actor&&furnitureInstances.size>=25,startPose:id=>furnitureActions.start(FURNITURE.find(f=>f.id===id)),cancelPose:()=>furnitureActions.cancel(),speak,blocked:()=>el('social-chat-dialog').open||el('life-dialog').open||adminPanels.isOpen});
 async function handleInteract(item){
@@ -194,7 +194,7 @@ const clock=new THREE.Clock();let frame=0;
 function animate(){requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.055);
  if(Object.values(keys).some(Boolean)){furnitureActions.cancel();api.cancelInteraction();}
- motion.update(dt,keys);
+ motion.update(dt,keys);brain?.update(dt);
 
  actor?.motion?.update(dt,motion.moving,furnitureActions.state?.type||(!motion.moving?lifeUI.gesture:null),brain?.expression);
  actor?.vrm?.update(dt);
@@ -213,7 +213,7 @@ function animate(){requestAnimationFrame(animate);
  furnitureActions.update(dt);
  doorOccupantPosition({motion,activePose:furnitureActions.state,avatarRoot,vrm:actor?.vrm},doorBodyPosition);
  const occupiedRoom=roomAt(doorBodyPosition.x,doorBodyPosition.z);if(occupiedRoom!==occupiedLightingRoom){occupiedLightingRoom=occupiedRoom;syncLighting(lighting.setOccupiedRoom(occupiedRoom));}
- updateDoors(dt,doorBodyPosition,{path:motion.path,manual:Object.values(keys).some(Boolean)});
+ updateDoors(dt,doorBodyPosition,{path:brain?.remotePath??motion.path,manual:Object.values(keys).some(Boolean)||brain?.remoteManualMoving});
  controls.update();projectLabels();renderer.render(scene,camera);
  if(++frame%4===0){
  }

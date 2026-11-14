@@ -99,6 +99,11 @@ export function createDB(file) {
       if (!row || !verifyPassword(password, row.password_hash)) return null;
       return { id: row.id, username: row.username, displayName: row.display_name, role: row.role,membership:row.membership,avatarUrl:row.avatar_url,muted_until:row.muted_until,daily_token_limit:row.daily_token_limit };
     },
+    changePassword(id,currentPassword,newPassword){
+      const fail=message=>{throw Object.assign(Error(message),{status:400});};
+      if(typeof currentPassword!=='string'||currentPassword.length>128||typeof newPassword!=='string'||newPassword.length<8||newPassword.length>128)fail('新密码需为 8–128 位');
+      db.exec('BEGIN IMMEDIATE');try{const row=db.prepare('SELECT password_hash FROM users WHERE id=?').get(id);if(!row||!verifyPassword(currentPassword,row.password_hash))fail('当前密码不正确');if(currentPassword===newPassword)fail('新密码不能与当前密码相同');db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hashPassword(newPassword),id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(id);db.exec('COMMIT');return true;}catch(error){db.exec('ROLLBACK');throw error;}
+    },
     setMembership:(id,status)=>db.prepare('UPDATE users SET membership=? WHERE id=?').run(status,id),
     updateProfile(id,{name,avatarUrl}){db.prepare('UPDATE users SET display_name=?,avatar_url=? WHERE id=?').run(name,avatarUrl,id);return db.prepare('SELECT id,username,display_name,role,avatar_url,membership,muted_until,daily_token_limit FROM users WHERE id=?').get(id);},
     createSession(userId) {

@@ -17,14 +17,15 @@
 <script src="./ui/icons.js"></script>
 <link rel="stylesheet" href="./ui/select.css">
 <script defer src="./ui/select.js"></script>
-  <script type="module" crossorigin src="./assets/index-B7IPTN-0.js"></script>
+  <script type="module" crossorigin src="./assets/index-HCRGnRD9.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-39OdgYD8.css">
 </head>
 <body>
 <div class="application">
   <header class="header">
     <div class="logo">
-      <div class="logo-text"><strong>Uoya</strong></div>
+      <div class="logo-mark" aria-hidden="true">✳</div>
+      <div class="logo-text"><strong>Uoya <span>魚家</span></strong></div>
     </div>
     <div class="header-actions"><button id="social-chat-open" class="soft-action" type="button">AI 聊天</button><button id="header-console-open" class="soft-action" type="button" hidden>控制台</button><button id="header-group-open" class="soft-action" type="button" hidden>群聊管理</button><span id="asset-status" class="asset-status">正在加载</span><div class="clock-badge"><strong id="local-clock">--:--</strong><small id="phase-status">自动昼夜</small></div></div>
   </header>
@@ -61,7 +62,7 @@
 <dialog id="life-dialog" aria-labelledby="life-title"><header class="social-chat-bar"><div><strong id="life-title">日常生活 · 商店与背包</strong></div><button id="life-close" type="button" aria-label="关闭生活面板">×</button></header><iframe id="life-frame" title="Uoya 生活系统"></iframe></dialog>
 <dialog id="social-chat-dialog" aria-labelledby="social-chat-title">
  <header class="social-chat-bar"><div><strong id="social-chat-title">蓝色小肥鱼 · AI 聊天</strong><small id="social-chat-status"></small></div><button id="social-chat-close" type="button" aria-label="关闭聊天">×</button></header>
- <iframe id="social-chat-frame" title="Uoya AI 共享聊天室" allow="autoplay"></iframe>
+ <iframe id="social-chat-frame" title="Uoya AI 共享聊天室" allow="autoplay; microphone; clipboard-write"></iframe>
 </dialog>
 </body>
 </html>

@@ -17,3 +17,6 @@ Third-party components and assets are not automatically relicensed:
 - npm dependencies: respective upstream licenses.
 
 Only project-owned code is changed to GPL-3.0-only. No additional rights to third-party material are granted by this notice.
+
+- chat-demo-main: Copyright (c) 2026 DeepSeek, MIT. Adapted WAV recorder and SSE decoder; UI interaction patterns adapted to native components. See docs/licenses/CHAT-DEMO-MIT.txt and public/social-chat/CHAT-DEMO-LICENSE.txt.
+- marked 15.0.12: MIT, local ESM distribution. See public/social-chat/vendor/MARKED-LICENSE.txt.

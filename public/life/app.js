@@ -5,6 +5,7 @@ const statMeta={
   boredom:{label:'无聊度',icon:'🧸',color:'#be9bfa',desc:'越低越不无聊'},
   hydration:{label:'补水度',icon:'💧',color:'#6ad1dc',desc:'记得按时喝水'},
 };
+const itemEmoji=item=>h(({gift:'🎁',food:'🍚',drink:'🥤',snack:'🍪',toy:'🧸',heart:'💙',star:'🌟'})[item?.emoji]||item?.emoji||'📦');
 const cn={food:'食物',drink:'饮料',snack:'零食',toy:'小玩具'};
 let isAdmin=false;let catalog=[];let activeCategory='all',me=null,aiAccount=null,pendingTip=null,activity={events:[]},busy=false;
 const h=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,8 +26,8 @@ function renderCatalog(){
   $('shopCount').textContent=`${items.length} 种商品`;
   $('catalogGrid').innerHTML=items.map(item=>`
     <article class="product-card ${item.id==='plain-rice'?'featured':''}">
-      <div class="product-head"><span class="product-emoji" aria-hidden="true">${UoyaIcons.product(item)}</span><span class="product-price"><span>✦</span> ${item.price}</span></div>
-      <h4>${h(item.name)} ${item.id==='plain-rice'?UoyaIcons.markup('star'):''}</h4>
+      <div class="product-head"><span class="product-emoji" aria-hidden="true">${itemEmoji(item)}</span><span class="product-price"><span>🪙</span> ${item.price}</span></div>
+      <h4>${h(item.name)} </h4>
       <p>${h(item.description)}${item.category==='toy'?` 可玩 ${item.uses} 次。`:''}</p>
       <div class="effects">${effectMarkup(item)}</div>
       <button class="buy-button" data-buy="${h(item.id)}" ${busy||!me||me.coins<item.price?'disabled':''} type="button">${me&&me.coins<item.price?'金币不足':'＋ 购买 · '+cn[item.category]}</button>
@@ -36,10 +37,10 @@ function renderCatalog(){
 function renderStats(){
   if(!me)return;
   $('coinBalance').textContent=me.coins.toLocaleString();$('aiCoinBalance').textContent=aiAccount?aiAccount.coins.toLocaleString()+' 金币':'—';renderTip();
-  $('moodChip').textContent=`✦ ${me.moodLabel}`;
+  $('moodChip').textContent=`😊 ${me.moodLabel}`;
   $('statsGrid').innerHTML=Object.entries(statMeta).map(([key,s])=>{
     const val=Math.round(me.stats[key]);
-    return `<div class="stat-card"><div class="stat-top"><span>${s.label}</span><span class="stat-icon">${UoyaIcons.markup({mood:'heart',satiety:'food',boredom:'toy',hydration:'drop'}[key])}</span></div><div class="stat-number">${val}<small>/100</small></div><div class="stat-track"><div class="stat-fill" style="width:${val}%;background:${s.color}"></div></div><div class="stat-sub">${s.desc}</div></div>`;
+    return `<div class="stat-card"><div class="stat-top"><span>${s.label}</span><span class="stat-icon">${h(s.icon)}</span></div><div class="stat-number">${val}<small>/100</small></div><div class="stat-track"><div class="stat-fill" style="width:${val}%;background:${s.color}"></div></div><div class="stat-sub">${s.desc}</div></div>`;
   }).join('');
 }
 function renderInventory(){
@@ -49,7 +50,7 @@ function renderInventory(){
   $('inventoryList').innerHTML=sorted.length?sorted.map(x=>{
     const toy=x.category==='toy';
     const cooldown=x.earliestAvailableAt>Date.now();
-    return `<div class="inventory-item"><div class="inventory-icon">${UoyaIcons.product(x)}</div><div class="inventory-copy"><strong>${h(x.name)}</strong><small>${`剩余 ${x.usesLeft} 次 · ${x.units} 件`}</small></div><button class="use-btn" data-use="${h(x.itemId)}" ${busy||cooldown?'disabled':''}>${cooldown?'冷却中':toy?'玩耍':'使用'}</button></div>`;
+    return `<div class="inventory-item"><div class="inventory-icon">${itemEmoji(x)}</div><div class="inventory-copy"><strong>${h(x.name)}</strong><small>${`剩余 ${x.usesLeft} 次 · ${x.units} 件`}</small></div><button class="use-btn" data-use="${h(x.itemId)}" ${busy||cooldown?'disabled':''}>${cooldown?'冷却中':toy?'玩耍':'使用'}</button></div>`;
   }).join(''):'<p class="empty">背包还是空的，先去商店买点东西吧。</p>';
   $('inventoryList').querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>use(b.dataset.use));
 }

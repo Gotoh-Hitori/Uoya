@@ -10,7 +10,6 @@ async function parseBody(req){
 }
 export function createLifeRoutes({engine,resolveUser,allowedOrigins=[]}={}) {
   if(!engine||typeof resolveUser!=='function')throw new Error('createLifeRoutes requires engine and resolveUser');
-  const hitMap=new Map();
   return async function handleLife(req,res){
     const path=new URL(req.url,'http://localhost').pathname;
     if(!path.startsWith('/api/life/'))return false;
@@ -22,11 +21,6 @@ export function createLifeRoutes({engine,resolveUser,allowedOrigins=[]}={}) {
       const user=await resolveUser(req);
       if(!user?.id)throw new LifeError('UNAUTHENTICATED','请先登录',401);
       const accountId=`user:${user.id}`;
-      const now=Date.now(), rateKey=accountId;
-      const recent=(hitMap.get(rateKey)||[]).filter(t=>now-t<60000);
-      recent.push(now);hitMap.set(rateKey,recent);
-      if(recent.length>90)throw new LifeError('RATE_LIMIT','操作过于频繁',429);
-      if(hitMap.size>1500)for(const [key,times] of hitMap){if(times.at(-1)<now-60000)hitMap.delete(key);}
       if(req.method==='POST'&&path==='/api/life/catalog'){
         if(user.role!=='admin')throw new LifeError('ADMIN_REQUIRED','仅管理员可创建商品',403);
         return json(res,201,{item:engine.createItem(await parseBody(req),user.id)})||true;

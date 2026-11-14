@@ -1,4 +1,4 @@
-import {generateWithLifeTools} from './ai-completions.mjs';
+import {generateWithLifeTools,completionEvents} from './ai-completions.mjs';
 import {injectMemory} from './memory.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -20,36 +20,7 @@ export function buildContext(db, persona, aiName, maxMessages = 36) {
   return [{role:'system',content:system}, ...selected.reverse()];
 }
 
-export async function* parseChatCompletionSSE(stream, signal) {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  try {
-    while (true) {
-      if (signal?.aborted) throw signal.reason || new Error('aborted');
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      while (true) {
-        const idx = buffer.indexOf('\n');
-        if (idx < 0) break;
-        const line = buffer.slice(0, idx).replace(/\r$/, '');
-        buffer = buffer.slice(idx + 1);
-        if (!line.startsWith('data:')) continue;
-        const raw = line.slice(5).trim();
-        if (raw === '[DONE]') return;
-        if (!raw) continue;
-        let obj;
-        try { obj = JSON.parse(raw); } catch { continue; }
-        if (obj?.error) throw new Error(obj.error.message || 'AI provider error');
-        const token = obj?.choices?.[0]?.delta?.content;
-        if (typeof token === 'string' && token) yield token;
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
+export async function* parseChatCompletionSSE(stream,signal){for await(const event of completionEvents(stream,signal)){const token=event.choices?.[0]?.delta?.content;if(typeof token==='string'&&token)yield token;}}
 
 async function generateMock(context, onToken) {
   // 明确的离线演示响应。仅用于测试一 AI + 多用户 + SSE 流程，不代表真实模型输出。
@@ -88,6 +59,7 @@ export function createAiWorker({db, config, broadcast, readPersona, memory=null,
     const runLife=life?{...life,...(runConfig.canControlAvatar===false?{tools:[],context:()=>life.context()+'\n当前发言人为普通成员，仅聊天，不执行或承诺角色控制、照明及生活操作。'}:{}),executeTool:(name,args,ctx)=>life.executeTool(name,args,{...ctx,...trace})}:null;
     if (targetHuman <= processedHumanId) { running = false; return; }
     broadcast('ai_status', { status: 'thinking', runId, aiName: config.aiName,...trace });
+    let activePartial='';
     try {
       usageMeter?.assertMember(trace.requestedBy?.id);
       let context = buildContext(db, readPersona()+(runLife?'\n\n'+runLife.context():''), config.aiName);
@@ -102,7 +74,7 @@ export function createAiWorker({db, config, broadcast, readPersona, memory=null,
         broadcast('memory_status',memory.getStatus());
       }
       context[0].content+='\n本次回复对象是 '+JSON.stringify(trace)+'。需要改变住宅或生活数据时必须调用工具；不能仅凭文字声称完成。采购以成功交易为准；动作排队不代表完成，使用物品需等待角色动作完成。当前队列中若已有同一用户要求的动作，不要重复安排。';
-      const onToken = token => !activeController.signal.aborted&&broadcast('ai_delta', { runId, delta: token });
+      const onToken = token => {if(!activeController.signal.aborted){activePartial+=token;broadcast('ai_delta', { runId, delta: token });}};
       const sources=[];const content = runConfig.aiMode === 'api'
         ? await generateWithLifeTools(runConfig, context, onToken,{life:runLife,runKey:targetHuman,signal:activeController.signal,onSources:list=>sources.push(...list),beforeRequest:usageMeter?details=>usageMeter.reserve({userId:trace.requestedBy.id,messageId:targetHuman,...details}):null,onRoundEnd:usageMeter?details=>usageMeter.finish(details.requestId,details):()=>{},onUsage:usage=>{usageMeter?.record(trace.requestedBy.id,targetHuman,usage);const reward=life?.tokenRewards?.record({...usage,accountId:'ai:starry'});if(reward)broadcast('token_usage',{...reward,lastRequestTokens:usage.totalTokens});}})
         : await generateMock(context, onToken);
@@ -112,6 +84,9 @@ export function createAiWorker({db, config, broadcast, readPersona, memory=null,
       broadcast('ai_status', { status: 'idle', runId,...trace });
       processedHumanId = targetHuman;
     } catch (error) {
+      if(activeController?.signal.reason?.code==='USER_STOP'&&activePartial.trim()){
+        try{usageMeter?.assertMember(trace.requestedBy?.id);const message=db.addAiMessage(activePartial+'\n\n（回复已停止）',{replyToMessageId:targetHuman});broadcast('message',{message});}catch{}
+      }
       console.error('AI execution failed:', error.message);
       broadcast('ai_error', { runId,...trace, message: activeController?.signal.aborted?'AI 回复已停止':error.code==='TOKEN_DAILY_LIMIT'||error.code==='MEMBER_MUTED'||error.code==='MEMBER_REMOVED'?error.message:`AI 连接失败：${String(error.message).slice(0,180)}` });
       broadcast('ai_status', { status: 'idle', runId,...trace });
@@ -131,6 +106,7 @@ export function createAiWorker({db, config, broadcast, readPersona, memory=null,
   }
   return {
     notifyHuman,
+    stopRun(user,runId){if(!running||activeRunId!==runId)return false;if(user.role!=='admin'&&user.id!==activeUserId)throw Object.assign(Error('只能停止自己的 AI 回复'),{status:403});activeController?.abort(Object.assign(Error('回复已停止'),{code:'USER_STOP'}));return true;},
     cancelAll(){pending=false;clearTimeout(debounceTimer);activeController?.abort();},
     cancelUser(id){if(pending&&db.getMessage(pendingHumanId)?.author?.id===id){pending=false;clearTimeout(debounceTimer);}if(activeUserId===id)activeController?.abort();},
     close() { stopped = true; clearTimeout(debounceTimer); activeController?.abort(); },
@@ -160,6 +136,6 @@ export async function requestTts(config, text) {
       if (bytes > 5_000_000) throw new Error('TTS 输出超过 5MB 上限');
       parts.push(value);
     }
-  } finally { reader.releaseLock(); }
+  } finally { await reader.cancel().catch(()=>{});reader.releaseLock(); }
   return Buffer.concat(parts);
 }

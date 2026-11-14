@@ -1,59 +1,29 @@
-/** Local life policy is server-authoritative; this adapter drives the existing VRM controller. */
+import {createMotionFollower} from './motion-follower.mjs';
+/** The backend owns activity and movement leases; observers only display snapshots. */
 export function createAvatarBrain({api,motion,ready,startPose,cancelPose,speak,blocked=()=>false}){
- const clientId=crypto.randomUUID();let state=null,run=null,dispatching=false,busy=false,lastManual=0,lastExpression=null,mirrored=null,localPausedUntil=0;
+ const clientId=crypto.randomUUID();let state=null,run=null,dispatching=false,busy=false,lastExpression=null,localPausedUntil=0,manualPending=false,sending=false,lastSent=0,signature='',manualGeneration=0;
  const panel=document.createElement('aside');panel.className='avatar-life';panel.innerHTML=`<label><input type="checkbox" data-auto> 角色自主生活</label><p data-status>登录后开启</p><div class="avatar-metrics"><div class="avatar-metric" data-metric="mood"><div class="avatar-metric-heading"><span>心情</span><output data-value>—</output></div><progress max="100" value="0" aria-label="心情"></progress></div><div class="avatar-metric" data-metric="satiety"><div class="avatar-metric-heading"><span>饱食</span><output data-value>—</output></div><progress max="100" value="0" aria-label="饱食"></progress></div><div class="avatar-metric" data-metric="hydration"><div class="avatar-metric-heading"><span>补水</span><output data-value>—</output></div><progress max="100" value="0" aria-label="补水"></progress></div><div class="avatar-metric" data-metric="boredom"><div class="avatar-metric-heading"><span>无聊</span><output data-value>—</output></div><progress max="100" value="0" aria-label="无聊"></progress></div></div>`;(document.querySelector('.stage')||document.body).append(panel);
  const toggle=panel.querySelector('[data-auto]');
- async function request(route,body){const response=await fetch('/social-api/api/autonomy/'+route,{credentials:'same-origin',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId,...body})}:{})});const data=await response.json();if(!response.ok){const error=Error(data.error||'角色同步失败');error.status=response.status;throw error;}return data;}
- function credentials(){return {token:state?.token,planId:run?.id,position:{...motion.position},heading:motion.heading};}
- function stop(preserveCommand=false){run=null;mirrored=null;if(!preserveCommand)api.cancelInteraction();motion.stop();cancelPose();}
- function adopt(next){
-  state=next;toggle.disabled=next.canControl===false;toggle.checked=next.enabled;
-  panel.querySelector('[data-status]').textContent=!next.enabled&&next.plan?.source!=='chat'?'自主生活已关闭':next.pausedUntil>Date.now()?'手动操作中':next.plan&&!['done','cancelled'].includes(next.plan.phase)?next.plan.label:'休息中';
-  const stats=next.account.stats;
-  for(const key of ['mood','satiety','hydration','boredom']){
-   const row=panel.querySelector('[data-metric="'+key+'"]'),bar=row.querySelector('progress'),value=Math.max(0,Math.round(stats[key]));
-   row.querySelector('[data-value]').textContent=String(value);
-   bar.max=100;bar.value=Math.min(100,value);
-   bar.setAttribute('aria-valuetext',value+' / 100');
-  }
-  if(next.expression&&next.expression.id!==lastExpression&&Date.now()-next.expression.at<10000){lastExpression=next.expression.id;speak(next.expression.line);}
-  if(run&&(run.id!==next.plan?.id||!next.owner&&!run.follower||next.owner&&run.follower||!next.enabled&&next.plan?.source!=='chat'||['done','cancelled'].includes(next.plan.phase)))stop();
- }
- async function poll(){
-  if(busy)return;busy=true;
-  try{
-   if(document.hidden){if(state?.owner){await request('release',credentials());stop();}return;}
-   const next=await request('state?clientId='+clientId);adopt(next);
-   if(next.canControl===false){mirror(next);return;}
-   const explicit=next.plan?.source==='chat'&&!['done','cancelled'].includes(next.plan.phase);
-   if((blocked()||Date.now()<localPausedUntil)&&!explicit){if(state?.owner){await request('release',credentials());stop();}return;}
-   if(!ready()||!next.enabled&&!explicit||next.pausedUntil>Date.now())return;
-   if(!next.owner||!next.plan||['done','cancelled'].includes(next.plan.phase)){
-    const claimed=await request('claim',{});adopt(claimed);
-    if(!claimed.owner){mirror(claimed);return;}
-   }
-   adopt(await request('heartbeat',credentials()));
-   if(state.plan?.phase==='holding'&&!run&&state.plan.furnitureId){run={id:state.plan.id,furnitureId:state.plan.furnitureId,completing:true};startPose(state.plan.furnitureId);}
-   if(['walking','acting'].includes(state.plan?.phase)&&!run){
-    const plan=state.plan;run={id:plan.id,furnitureId:plan.furnitureId};mirrored=null;
-    dispatching=true;const command=plan.command||{type:'interact',args:{id:plan.furnitureId}},pending=api.execute(command);dispatching=false;
-    void pending.then(async result=>{if(run?.id!==plan.id)return;if(command.type==='interact'){if(result.status!=='active')return failed();}else{if(['cancelled','blocked'].includes(result.status))return failed();adopt(await request('arrive',credentials()));if(run?.id===plan.id)await complete();}}).catch(()=>{if(run?.id===plan.id)return failed();});
-   }
-  }catch(error){if(error.status===401){stop();state=null;toggle.disabled=true;panel.querySelector('[data-status]').textContent='请先登录';}else if(run){stop();panel.querySelector('[data-status]').textContent='连接暂时中断，已暂停角色活动';}}
-  finally{dispatching=false;busy=false;}
- }
- function mirror(next){
-  if(!next.plan||!['walking','acting','holding'].includes(next.plan.phase)){if(mirrored)stop();return;}
-  // Observers display the authoritative action without consuming inventory again.
-  motion.position.x=next.position.x;motion.position.z=next.position.z;motion.heading=next.heading;
-  if(next.plan.furnitureId&&['acting','holding'].includes(next.plan.phase)&&mirrored!==next.plan.id){mirrored=next.plan.id;run={id:next.plan.id,furnitureId:next.plan.furnitureId,follower:true};startPose(next.plan.furnitureId);}
- }
+
+ const follower=createMotionFollower({motion,ready,startPose,cancelPose});
+ async function request(route,body){const response=await fetch('/social-api/api/autonomy/'+route,{credentials:'same-origin',keepalive:route==='release',...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId,...body})}:{})});const data=await response.json();if(!response.ok)throw Object.assign(Error(data.error||'角色同步失败'),{status:response.status});return data;}
+ function credentials(){return {token:state?.manualOwner?state.manualToken:state?.token,planId:run?.id,position:{...motion.position},heading:motion.heading,moving:motion.moving,path:motion.path.slice(0,12).map(p=>({x:p.x,z:p.z})),activity:api.activity?{furniture:api.activity.furniture}:null};}
+ function stop(preserveCommand=false){run=null;if(!preserveCommand)api.cancelInteraction();motion.stop();cancelPose();}
+ function receiveMotion(packet){const self=packet?.controllerClientId===clientId;if(!follower.accept(packet,!self&&!manualPending))return;if(state)state={...state,motion:packet};if(self||manualPending)return;if(state?.owner||state?.manualOwner){manualGeneration++;manualPending=false;state={...state,owner:false,manualOwner:false};localPausedUntil=0;stop();}else if(motion.path.length)motion.stop();}
+ function adopt(next){if(next.motion&&state?.motion?.epoch===next.motion.epoch&&next.motion.seq<state.motion.seq)return;const lost=run&&(run.id!==next.plan?.id||!next.owner||!next.enabled&&next.plan?.source!=='chat'||['done','cancelled'].includes(next.plan?.phase));if(lost)stop();state=next;toggle.disabled=next.canControl===false;toggle.checked=next.enabled;panel.querySelector('[data-status]').textContent=!next.enabled&&next.plan?.source!=='chat'?'自主生活已关闭':next.pausedUntil>Date.now()?'手动操作中':next.plan&&!['done','cancelled'].includes(next.plan.phase)?next.plan.label:'休息中';for(const key of ['mood','satiety','hydration','boredom']){const row=panel.querySelector('[data-metric="'+key+'"]'),bar=row.querySelector('progress'),value=Math.max(0,Math.round(next.account.stats[key]));row.querySelector('[data-value]').textContent=String(value);bar.max=100;bar.value=Math.min(100,value);bar.setAttribute('aria-valuetext',value+' / 100');}if(next.expression&&next.expression.id!==lastExpression&&Date.now()-next.expression.at<10000){lastExpression=next.expression.id;speak(next.expression.line);}if(next.owner||next.manualOwner){follower.accept(next.motion,false);}else receiveMotion(next.motion);}
+ async function poll(){if(busy)return;busy=true;try{if(document.hidden)return;const next=await request('state?clientId='+clientId);adopt(next);if(next.canControl===false||!ready()||manualPending)return;const explicit=next.plan?.source==='chat'&&!['done','cancelled'].includes(next.plan.phase);if(next.manualOwner&&Date.now()<localPausedUntil&&!explicit)return;if((blocked()||Date.now()<localPausedUntil)&&!explicit){if(next.owner){const data=await request('release',credentials());stop();adopt(data);}return;}if(!next.enabled&&!explicit||next.pausedUntil>Date.now())return;
+  if(!next.owner||!next.plan||['done','cancelled'].includes(next.plan.phase)){const owned=!!state?.owner,claimed=await request('claim',{});if(claimed.owner&&!owned){stop(true);follower.clear();motion.position.x=claimed.position.x;motion.position.z=claimed.position.z;motion.heading=claimed.heading||0;}adopt(claimed);if(!claimed.owner)return;}
+  if(state.plan?.phase==='holding'&&!run&&state.plan.furnitureId){run={id:state.plan.id,furnitureId:state.plan.furnitureId,completing:true};startPose(state.plan.furnitureId);}
+  if(['walking','acting'].includes(state.plan?.phase)&&!run){const plan=state.plan;run={id:plan.id,furnitureId:plan.furnitureId};follower.clear();dispatching=true;const command=plan.command||{type:'interact',args:{id:plan.furnitureId}},pending=api.execute(command);dispatching=false;void pending.then(async result=>{if(run?.id!==plan.id)return;if(command.type==='interact'){if(result.status!=='active')return failed();}else{if(['cancelled','blocked','interrupted'].includes(result.status))return failed();adopt(await request('arrive',credentials()));if(run?.id===plan.id)await complete();}}).catch(()=>{if(run?.id===plan.id)return failed();});}
+ }catch(error){if(error.status===401){stop();follower.clear();state=null;toggle.disabled=true;panel.querySelector('[data-status]').textContent='请先登录';}else if(run){stop();panel.querySelector('[data-status]').textContent='连接暂时中断，已暂停角色活动';}}finally{dispatching=false;busy=false;}}
+ async function sync(){if(sending||manualPending||document.hidden||state?.canControl===false||!state||!state.owner&&!state.manualOwner)return;if(state.manualOwner&&Date.now()>localPausedUntil&&!motion.moving)return;const body=credentials(),key=JSON.stringify(body),time=Date.now();if(key===signature&&time-lastSent<1500)return;sending=true;lastSent=time;signature=key;try{adopt(await request(state.manualOwner?'syncManual':'heartbeat',body));}catch(error){if([400,401,403,409].includes(error.status)&&body.token===(state?.manualOwner?state.manualToken:state?.token)){manualPending=false;localPausedUntil=0;stop();follower.clear();if(state)state={...state,owner:false,manualOwner:false};void poll();}}finally{sending=false;}}
  async function failed(){const current=run;if(!current)return;try{const next=await request('fail',credentials());if(run===current)adopt(next);}catch{}if(run===current)stop();}
- async function arrive(id){const current=run;if(!current||current.follower||id!==current.furnitureId)return false;try{const next=await request('arrive',credentials());if(run!==current)return false;adopt(next);return true;}catch{if(run===current)await failed();return false;}}
- async function complete(){const current=run;if(!current||current.follower||current.completing)return;current.completing=true;try{const next=await request('complete',credentials());if(run===current)adopt(next);}catch{if(run===current)await failed();}}
- function manual(preserveCommand=false){if(dispatching)return;const time=Date.now();localPausedUntil=time+45000;stop(preserveCommand);if(time-lastManual<1000)return;lastManual=time;void request('suspend',{}).then(adopt).catch(()=>{});}
- toggle.addEventListener('change',()=>{stop();localPausedUntil=0;void request('config',{enabled:toggle.checked}).then(adopt).then(poll).catch(()=>{toggle.checked=false;});});
- document.addEventListener('visibilitychange',()=>{if(document.hidden&&state?.owner){void request('release',credentials()).catch(()=>{});stop();}else void poll();});
- toggle.disabled=true;setInterval(poll,3000);void poll();
- return {get active(){return !!run;},get dispatching(){return dispatching;},get state(){return state;},get expression(){return state?.expression;},describe(){if(run)speak(state?.expression?.line||state?.plan?.line||'');},manual,arrive,complete};
+ async function arrive(id){const current=run;if(!current||id!==current.furnitureId)return false;try{const next=await request('arrive',credentials());if(run!==current)return false;adopt(next);return true;}catch{if(run===current)await failed();return false;}}
+ async function complete(){const current=run;if(!current||current.completing)return;current.completing=true;try{const next=await request('complete',credentials());if(run===current)adopt(next);}catch{if(run===current)await failed();}}
+ function manual(preserveCommand=false){if(dispatching)return;localPausedUntil=Date.now()+45000;stop(preserveCommand);follower.clear();if(manualPending||state?.manualOwner)return;const stamp=++manualGeneration;manualPending=true;void request('suspend',credentials()).then(next=>{if(stamp!==manualGeneration)return;adopt(next);}).catch(()=>{}).finally(()=>{if(stamp===manualGeneration)manualPending=false;});}
+ toggle.addEventListener('change',()=>{stop();follower.clear();localPausedUntil=0;void request('config',{enabled:toggle.checked}).then(adopt).then(poll).catch(()=>{toggle.checked=false;});});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state?.owner||state?.manualOwner)){const body=credentials();void request('release',body).catch(()=>{});stop();follower.clear();if(state)state={...state,owner:false,manualOwner:false};}else if(!document.hidden)void poll();});
+ window.addEventListener('pagehide',()=>{if(state?.owner||state?.manualOwner)void request('release',credentials()).catch(()=>{});});
+ toggle.disabled=true;setInterval(poll,1000);setInterval(sync,250);void poll();
+ return {get active(){return !!run||!!follower.pose;},get dispatching(){return dispatching;},get state(){return state;},get expression(){return state?.expression;},get remotePath(){return follower.following?follower.path:null;},get remoteManualMoving(){return follower.manualMoving;},update:dt=>follower.update(dt),receiveMotion,describe(){if(run)speak(state?.expression?.line||state?.plan?.line||'');},manual,arrive,complete};
 }

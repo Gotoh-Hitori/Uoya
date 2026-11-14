@@ -17,7 +17,7 @@
 <script src="/ui/icons.js"></script>
 <link rel="stylesheet" href="/ui/select.css">
 <script defer src="/ui/select.js"></script>
-</head>
+<link rel="stylesheet" href="./chat-components.css"></head>
 <body>
   <div class="ambient-glow glow-a"></div>
   <div class="ambient-glow glow-b"></div>
@@ -26,15 +26,15 @@
       <header class="chat-header">
         <div class="chat-heading"><div class="header-channel-icon">#</div><div><div class="headline-row"><h1>共享客厅</h1></div></div></div>
         <div class="header-utility"><button type="button" id="adminConsoleOpen" class="small-button hidden">控制台</button>      <button class="account-card" id="accountMenu" type="button"><div class="account-avatar" id="myAvatar">访</div><span><strong id="myDisplay">访客</strong><small id="myRole">尚未登录</small></span><span class="account-arrow">•••</span></button>
-      <div class="account-popover hidden" id="accountPopover"><button type="button" id="myProfileOpen">我的昵称和头像</button><button type="button" id="groupManage" class="hidden">群聊管理</button><button type="button" id="joinManage" class="hidden">入群管理</button><button type="button" id="personaManage" class="hidden">编辑 AI 人格</button><label class="account-voice"><input type="checkbox" id="autoSpeak"> 自动朗读</label><label class="account-voice"><input type="checkbox" id="preferServerTts" disabled> 增强语音</label><button type="button" id="logoutButton">退出登录</button></div></div>
+      <div class="account-popover hidden" id="accountPopover"><button type="button" id="myProfileOpen">我的资料与密码</button><button type="button" id="groupManage" class="hidden">群聊管理</button><button type="button" id="joinManage" class="hidden">入群管理</button><button type="button" id="personaManage" class="hidden">编辑 AI 人格</button><label class="account-voice"><input type="checkbox" id="autoSpeak"> 自动朗读</label><label class="account-voice"><input type="checkbox" id="preferServerTts" disabled> 增强语音</label><button type="button" id="logoutButton">退出登录</button></div></div>
       </header>
       <div class="chat-scroll" id="chatScroll">
         <div class="history-actions"><button id="loadMore" class="small-button hidden">加载更早消息</button></div>
-        <div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
+        <button id="newMessageJump" class="new-message-button hidden" type="button">查看最新消息 ↓</button><div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
         <div id="typing" class="typing-line hidden"><div class="mini-ai-icon">✳</div><span class="typing-copy"><b id="typingName">AI</b> 正在思考<span class="typing-dots"><i></i><i></i><i></i></span></span></div>
-        <div id="streaming" class="stream-bubble hidden"><div class="mini-ai-icon">✳</div><div><span class="stream-name">AI · 正在回复</span><p id="streamText"></p></div></div>
+        <div id="streaming" class="stream-bubble hidden"><div class="mini-ai-icon">✳</div><div><span class="stream-name">AI · 正在回复</span><div id="streamText"></div><div class="stream-controls"><button id="stopReply" type="button" class="small-button hidden">停止回复</button><span id="streamNotice" class="stream-notice"></span></div></div></div>
       </div>
-      <div class="composer-area"><div id="mediaDrafts" class="uoya-media-drafts" hidden></div><form id="composer" class="composer"><textarea id="messageInput" rows="2" maxlength="2000" placeholder="和大家说点什么…" aria-label="发送到共享客厅"></textarea><div class="compose-controls"><button type="button" class="small-button" id="mediaAttach" aria-label="上传图片或视频">＋</button><button type="submit" class="send-button" id="sendButton" title="发送消息">发送 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></form></div>
+      <div class="composer-area"><div id="mediaDrafts" class="uoya-media-drafts" hidden></div><form id="composer" class="composer"><textarea id="messageInput" rows="2" maxlength="2000" placeholder="和大家说点什么…" aria-label="发送到共享客厅"></textarea><div class="compose-controls"><button type="button" class="small-button" id="mediaAttach" aria-label="上传图片或视频">＋</button><button id="voiceInput" type="button" class="small-button" aria-label="语音输入">语音</button><button id="cancelVoice" type="button" class="small-button" hidden>取消</button><span id="voiceStatus" class="voice-status" role="status"></span><button type="submit" class="send-button" id="sendButton" title="发送消息">发送 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></form></div>
     </main>
 
 </div>

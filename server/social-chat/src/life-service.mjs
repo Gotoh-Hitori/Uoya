@@ -17,7 +17,7 @@ export function createLifeService(config,{now=()=>Date.now()}={}){
  const eventInsert=database.prepare('INSERT INTO life_events(account_id,type,payload,created_at) VALUES (?,\'furniture\',?,?)');
  const updateStats=database.prepare('UPDATE life_accounts SET mood=?,satiety=?,boredom=?,hydration=?,updated_at=? WHERE id=?');
  const eventsAfter=database.prepare("SELECT id,account_id AS accountId,type,payload,created_at AS createdAt FROM life_events WHERE account_id='ai:starry' AND type IN ('purchase','use','furniture') AND id>? ORDER BY id LIMIT 100");
- const listeners=new Set(),requestTimes=new Map();const publish=event=>{for(const listener of listeners)try{listener(event);}catch(error){console.error('Life subscriber failed:',error.message);}};
+ const listeners=new Set();const publish=event=>{for(const listener of listeners)try{listener(event);}catch(error){console.error('Life subscriber failed:',error.message);}};
  const tokenRewards=createTokenRewards({database,engine,publish,now});
  engine.subscribe(publish);
  function welcome(accountId,amount){if(amount>0)engine.grantCoins({accountId,amount,source:'welcome',sourceRef:'bluehaven_welcome_v1'});}
@@ -88,8 +88,6 @@ export function createLifeService(config,{now=()=>Date.now()}={}){
    try{
     const origin=req.headers.origin;if(origin&&!allowedOrigins.includes(origin)&&origin!=='http://'+req.headers.host&&origin!=='https://'+req.headers.host)throw new LifeError('ORIGIN_DENIED','请求来源不允许',403);
     const user=ensureUser(await resolveUser(req));if(!user)return send(401,{error:'请先登录',code:'UNAUTHENTICATED'});
-    const hits=(requestTimes.get(user.id)||[]).filter(t=>now()-t<60000);hits.push(now());requestTimes.set(user.id,hits);if(hits.length>90)throw new LifeError('RATE_LIMIT','操作过于频繁',429);
-    if(requestTimes.size>1500)for(const [id,times] of requestTimes)if(now()-times.at(-1)>=60000)requestTimes.delete(id);
     if(req.method!=='POST')return send(405,{error:'仅支持 POST'});
     let size=0,chunks=[];for await(const chunk of req){size+=chunk.length;if(size>8192)throw new LifeError('BODY_TOO_LARGE','请求过大',413);chunks.push(chunk);}
     let body;try{body=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new LifeError('INVALID_JSON','JSON 格式错误');}

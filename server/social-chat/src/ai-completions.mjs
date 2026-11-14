@@ -1,12 +1,9 @@
+import {readServerSentEvents} from './sse.mjs';
 import {generateWithResponses,nativeResponsesHost} from './ai-responses.mjs';
 import {randomUUID,createHash} from 'node:crypto';
 
 export async function* completionEvents(stream,signal){
- const reader=stream.getReader(),decoder=new TextDecoder();let buffer='';
- try{while(true){if(signal.aborted)throw signal.reason||Error('aborted');const {done,value}=await reader.read();buffer+=done?decoder.decode():decoder.decode(value,{stream:true});if(done&&buffer&&!buffer.endsWith('\n'))buffer+='\n';let end;
-  while((end=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,end).replace(/\r$/,'');buffer=buffer.slice(end+1);if(!line.startsWith('data:'))continue;const text=line.slice(5).trim();if(text==='[DONE]')return;if(!text)continue;let data;try{data=JSON.parse(text);}catch{continue;}if(data.error)throw Error(data.error.message||'AI provider error');yield data;}
-  if(done)break;
- }}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+ for await(const event of readServerSentEvents(stream,signal)){const text=event.data.trim();if(text==='[DONE]')return;if(!text)continue;let data;try{data=JSON.parse(text);}catch{continue;}if(data.error)throw Error(data.error.message||'AI provider error');yield data;}
 }
 export async function generateWithLifeTools(config,context,onToken,{life=null,runKey=0,onUsage=()=>{},beforeRequest=null,onRoundEnd=()=>{},signal=null,onSources=()=>{}}={}){
  if(!config.aiApiKey)throw Error('AI_MODE=api 但尚未配置 AI_API_KEY');

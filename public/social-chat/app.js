@@ -1,3 +1,5 @@
+import {copyText,createStreamingMarkdown} from './markdown.js';
+import {createVoiceInput} from './voice-input.js';
 import {renderMessageBody} from './media-render.js';
 import {createMediaComposer} from './media-composer.js';
 import {createGroupManagementUI} from './group-management.js';
@@ -18,10 +20,13 @@ const state = {
   currentAudio:null, memory:null,
 };
 const adminConsole=createAdminConsoleUI({api,onSaved:refreshAiConfig,onEditPersona:editPersona,onUnauthorized:()=>{show($('#adminConsoleOpen'),false);}});
-const memberSettings=createMemberSettings({api,onProfile:applyMemberProfile}),joinManagement=createJoinManagement({api});
-const mediaComposer=createMediaComposer({button:$('#mediaAttach'),preview:$('#mediaDrafts'),apiBase:base,onNotice:toast,onChange:()=>renderMute()});
+const memberSettings=createMemberSettings({api,onProfile:applyMemberProfile,onPasswordChanged:()=>{resetToLogin();toast('密码已修改，请使用新密码登录');}}),joinManagement=createJoinManagement({api});
+const mediaComposer=createMediaComposer({button:$('#mediaAttach'),preview:$('#mediaDrafts'),apiBase:base,dropTarget:$('#composer'),pasteTarget:els.messageInput,canUpload:()=>!!state.me&&!isMuted(),onNotice:toast,onChange:()=>renderMute()});
 const groupManagement=createGroupManagementUI({api,onOpenJoin:()=>joinManagement.open()});
 async function refreshAiConfig(){const c=await api('/api/config');state.profile=c.profile;state.aiMode=c.aiMode;state.trigger=c.aiTriggerMode;renderProfile();notifyHouse({type:'bluehaven:chat:mode',mode:state.aiMode});}
+const streamRenderer=createStreamingMarkdown(els.streamText,{afterRender:()=>scrollBottom()});
+const voice=createVoiceInput({button:$('#voiceInput'),cancelButton:$('#cancelVoice'),status:$('#voiceStatus'),input:els.messageInput,apiBase:base,onNotice:toast,canRecord:()=>!!state.me&&!isMuted()&&!state.sending});
+function sizeInput(){els.messageInput.style.height='auto';els.messageInput.style.height=Math.min(innerWidth<600?120:180,Math.max(42,els.messageInput.scrollHeight))+'px';}
 let toastTimer;
 const avatarPalette = ['#4f8cd3','#9472cb','#dc96a6','#51a9b1','#7f9dcc','#9bb26c','#ca9a6c','#6f9dcd'];
 function avatarColor(key='') { let hash=0;for (let i=0;i<key.length;i++) hash=(hash*31+key.charCodeAt(i))|0;return avatarPalette[Math.abs(hash)%avatarPalette.length]; }
@@ -70,14 +75,15 @@ function appendMessage(message,{prepend=false,announce=true}={}) {
   const content=create('div','msg-content');renderMessageBody(content,message);
   meta.append(name,date);
   main.append(meta,content);
-  if(ai) {
+  {
     const actions=create('div','msg-actions');
     const speak=create('button','speak-button','♫ 朗读');speak.type='button';
     speak.setAttribute('aria-label','朗读这条 AI 消息');
     speak.addEventListener('click',()=>speakAi(message));
     const copy=create('button','copy-button','复制');copy.type='button';
-    copy.addEventListener('click',()=>navigator.clipboard?.writeText(message.content).then(()=>toast('已复制')));
-    actions.append(speak,copy);main.append(actions);
+    copy.addEventListener('click',()=>copyText(message.content).then(()=>toast('已复制')).catch(()=>toast('复制失败')));
+    const quote=create('button','quote-button','引用');quote.type='button';quote.onclick=()=>{const name=ai?state.profile?.name||'AI':message.author?.displayName||'成员';const next='> '+name+'：'+message.content.replace(/\n/g,'\n> ')+'\n\n';if(next.length>2000)return toast('消息过长，无法完整引用');els.messageInput.value=next;sizeInput();els.messageInput.focus({preventScroll:true});};
+    if(ai)actions.append(speak);actions.append(copy,quote);main.append(actions);
   }
   row.append(avatar,main);
   if(prepend)els.messages.prepend(row);else els.messages.append(row);for(const action of message.actions||[])renderAction(message.id,action);
@@ -115,11 +121,12 @@ function renderMute(){const muted=isMuted();els.messageInput.disabled=muted;if(!
 setInterval(()=>{if(state.me)renderMute();},1000);
 function setConnection(connected){state.connected=connected;}
 function updatePresence(data) {state.onlineUserIds=data.onlineUserIds||[];renderMembers();}
-function clearStream(){state.stream=null;els.streamText.textContent='';show(els.streaming,false);show(els.typing,false);}
+function clearStream(){state.stream=null;streamRenderer.clear();$('#streamNotice').textContent='';show($('#stopReply'),false);show(els.streaming,false);show(els.typing,false);}
 function listenRealtime() {
   state.eventSource?.close();
   const s=new EventSource(base+'/api/events',{withCredentials:true});state.eventSource=s;
-  s.addEventListener('connected',()=>{setConnection(true);void refreshAiConfig().catch(()=>{});refreshMissedMessages();void api('/api/messages?limit=65').then(r=>r.messages.forEach(m=>appendMessage(m,{announce:false}))).catch(()=>{});});
+  s.addEventListener('connected',()=>{clearStream();state.aiRunId=0;setConnection(true);void refreshAiConfig().catch(()=>{});refreshMissedMessages();void api('/api/messages?limit=65').then(r=>r.messages.forEach(m=>appendMessage(m,{announce:false}))).catch(()=>{});});
+  s.addEventListener('session_revoked',()=>{resetToLogin();toast('登录已失效，请使用新密码登录');});
   s.addEventListener('membership_changed',e=>{if(JSON.parse(e.data).membership==='kicked'){resetToLogin();els.authError.textContent='已被管理员移出群聊，可重新申请加入';}});
   s.addEventListener('member_moderated',e=>{const data=JSON.parse(e.data);if(data.userId===state.me?.id){state.me.muted_until=data.mutedUntil;state.me.daily_token_limit=data.dailyTokenLimit;renderMute();notifyHouse({type:'bluehaven:chat:authenticated',user:state.me});}});
   s.addEventListener('avatar_action',e=>{const action=JSON.parse(e.data);renderAction(action.messageId,action);});
@@ -142,17 +149,17 @@ function listenRealtime() {
     const data=JSON.parse(e.data);
     if(data.status==='thinking') {
       $('#typingName').textContent=(state.profile?.name||'AI')+(data.requestedBy?' → '+(data.requestedBy.displayName||data.requestedBy.username):'');
-      state.aiRunId=data.runId; state.stream='';els.streamText.textContent='';show(els.typing,true);show(els.streaming,false);scrollBottom(true);
+      clearStream();$('.stream-name').textContent=$('#typingName').textContent+' · 正在回复';state.aiRunId=data.runId;state.stream='';state.canStop=state.me?.role==='admin'||data.requestedBy?.id===state.me?.id;show($('#stopReply'),state.canStop);show(els.typing,true);show(els.streaming,true);scrollBottom();
     } else if(data.runId===state.aiRunId&&!state.stream) {clearStream();}
   });
   s.addEventListener('ai_delta',e=>{
     const data=JSON.parse(e.data);
-    if(state.aiRunId!==data.runId)state.aiRunId=data.runId;
+    if(state.aiRunId!==data.runId)return;
     state.stream=(state.stream||'')+data.delta;
-    els.streamText.textContent=state.stream;
-    show(els.typing,false);show(els.streaming,true);scrollBottom(true);
+    streamRenderer.push(state.stream);
+    show(els.typing,false);show(els.streaming,true);scrollBottom();
   });
-  s.addEventListener('ai_error',e=>{clearStream();const data=JSON.parse(e.data);if(!data.requestedBy?.id||data.requestedBy.id===state.me?.id)toast(data.message||'AI 模型暂时不可用');});
+  s.addEventListener('ai_error',e=>{const data=JSON.parse(e.data);if(data.runId!==state.aiRunId)return;if(state.stream){streamRenderer.flush();$('#streamNotice').textContent='回复已中断';show($('#stopReply'),false);show(els.typing,false);}else clearStream();if(!data.requestedBy?.id||data.requestedBy.id===state.me?.id)toast(data.message||'AI 模型暂时不可用');});
   s.addEventListener('persona_updated',()=>toast('管理员更新了 AI 人格，下一次回复起生效'));
   s.onerror=()=>setConnection(false);
 }
@@ -185,7 +192,7 @@ async function loadHistory() {
   } catch(e){toast(e.message);}
 }
 function resetToLogin() {
-  memberSettings.close();joinManagement.close();groupManagement.close();mediaComposer.clear();
+  memberSettings.close();joinManagement.close();groupManagement.close();mediaComposer.clear();voice.cancel();stopSpeaking();
   adminConsole.setUser(null);show($('#adminConsoleOpen'),false);
   state.eventSource?.close();state.eventSource=null;state.me=null;notifyHouse({type:'bluehaven:chat:signed-out'});
   state.messages=[];state.messageIds.clear();els.messages.replaceChildren();
@@ -195,7 +202,7 @@ async function startSession() {
   try {
     const [config,boot]=await Promise.all([api('/api/config'),api('/api/bootstrap')]);
     state.profile=config.profile;state.aiMode=config.aiMode;state.trigger=config.aiTriggerMode;state.ttsServer=config.tts.server;
-    updateMe(boot.me);
+    updateMe(boot.me);$('#voiceInput').disabled=!config.speech?.asr;$('#voiceInput').title=config.speech?.asr?'录音并转写为文字':'管理员尚未配置语音输入';
     state.members=boot.members;state.onlineUserIds=boot.presence.onlineUserIds;
     renderMembers();renderProfile();renderMemory(boot.memory||config.memory);
     els.messages.replaceChildren();state.messages=[];state.messageIds.clear();
@@ -246,34 +253,27 @@ async function submitAuth(event) {
 }
 async function sendMessage(e) {
   e?.preventDefault();
-  if(state.sending||!state.me)return;if(isMuted())return toast('禁言期间不能发言');
+  if(state.sending||!state.me)return;if(voice.busy)return toast('请先结束语音输入');if(isMuted())return toast('禁言期间不能发言');
   const content=els.messageInput.value.trim(),attachments=mediaComposer.ids;if(!content&&!attachments.length)return;if(mediaComposer.busy||mediaComposer.hasErrors)return toast('请等待附件处理完成，或移除失败的附件');
   state.sending=true;els.sendButton.disabled=true;mediaComposer.freeze(true);
   const clientId=crypto.randomUUID();
   try {
     const result=await api('/api/messages',{method:'POST',body:{content,clientId,attachments}});
-    els.messageInput.value='';mediaComposer.clear();
+    els.messageInput.value='';sizeInput();mediaComposer.clear();
     appendMessage(result.message);scrollBottom(true);if(result.actions?.length)toast('已安排角色动作');
   }catch(err){toast(`发送失败：${err.message}`);}
-  finally{state.sending=false;mediaComposer.freeze(false);els.sendButton.disabled=isMuted();els.messageInput.focus();}
+  finally{state.sending=false;mediaComposer.freeze(false);els.sendButton.disabled=isMuted();if(innerWidth>720)els.messageInput.focus({preventScroll:true});}
 }
-async function speakAi(message) {
-  try {
-    if(state.currentAudio){state.currentAudio.pause();URL.revokeObjectURL(state.currentAudio.src);state.currentAudio=null;}
-    window.speechSynthesis?.cancel?.();
-    if(state.preferServerTts&&state.ttsServer) {
-      const response=await api('/api/tts',{method:'POST',body:{messageId:message.id}});
-      const blob=await response.blob();
-      const objectURL=URL.createObjectURL(blob);
-      const audio=new Audio(objectURL);state.currentAudio=audio;
-      audio.onended=()=>{URL.revokeObjectURL(objectURL);state.currentAudio=null;};
-      await audio.play();return;
-    }
-    if(!('speechSynthesis' in window)){toast('当前无法朗读');return;}
-    const u=new SpeechSynthesisUtterance(message.content);
-    u.lang='zh-CN';u.rate=1.0;u.pitch=1.05;
-    window.speechSynthesis.speak(u);
-  } catch(error) {toast(`语音播放失败：${error.message}`);}
+function stopSpeaking(){state.speechGeneration=(state.speechGeneration||0)+1;state.speechController?.abort();state.speechController=null;if(state.currentAudio){state.currentAudio.pause();URL.revokeObjectURL(state.currentAudio.src);state.currentAudio=null;}window.speechSynthesis?.cancel();state.speakingId=null;paintSpeaking();}
+function paintSpeaking(){for(const button of document.querySelectorAll('.speak-button')){const selected=Number(button.closest('[data-id]')?.dataset.id)===state.speakingId;button.textContent=selected?'停止朗读':'朗读';button.setAttribute('aria-pressed',String(selected));}}
+async function speakAi(message){
+ const previous=state.speakingId;stopSpeaking();if(previous===message.id)return;const generation=state.speechGeneration;state.speakingId=message.id;paintSpeaking();
+ try{
+  if(state.preferServerTts&&state.ttsServer){const controller=new AbortController();state.speechController=controller;const response=await api('/api/tts',{method:'POST',body:{messageId:message.id},signal:controller.signal});const blob=await response.blob();if(generation!==state.speechGeneration)return;const url=URL.createObjectURL(blob),audio=new Audio(url);state.currentAudio=audio;const finish=()=>{URL.revokeObjectURL(url);if(generation===state.speechGeneration){state.currentAudio=null;state.speakingId=null;paintSpeaking();}};audio.onended=audio.onerror=finish;await audio.play();return;}
+  if(!('speechSynthesis' in window))throw Error('当前浏览器无法朗读');
+  const plain=document.createElement('div');renderMessageBody(plain,{content:message.content});plain.querySelectorAll('pre,.code-toolbar').forEach(el=>el.remove());for(const el of plain.querySelectorAll('p,li,h1,h2,h3,tr'))el.append(document.createTextNode('。'));
+  const utterance=new SpeechSynthesisUtterance(plain.textContent);utterance.lang='zh-CN';utterance.rate=1;utterance.pitch=1.05;utterance.onend=utterance.onerror=()=>{if(generation===state.speechGeneration){state.speakingId=null;paintSpeaking();}};window.speechSynthesis.speak(utterance);
+ }catch(error){if(generation===state.speechGeneration){stopSpeaking();if(error.name!=='AbortError')toast('语音播放失败：'+error.message);}}
 }
 async function editPersona() {
   $('#accountPopover').classList.add('hidden');
@@ -293,6 +293,10 @@ async function savePersona() {
   finally{button.disabled=false;}
 }
 function wire() {
+  els.messageInput.addEventListener('input',sizeInput);
+  $('#stopReply').onclick=async()=>{try{await api('/api/ai/stop',{method:'POST',body:{runId:state.aiRunId}});}catch(error){toast(error.message);}};
+  $('#newMessageJump').onclick=()=>{scrollBottom(true);show($('#newMessageJump'),false);};
+  els.chatScroll.addEventListener('scroll',()=>show($('#newMessageJump'),!isNearBottom()),{passive:true});
   $('#loginTab').addEventListener('click',()=>setAuthMode(false));
   $('#registerTab').addEventListener('click',()=>setAuthMode(true));
   els.authForm.addEventListener('submit',submitAuth);
@@ -314,7 +318,7 @@ function wire() {
   document.addEventListener('click',e=>{if(!e.target.closest('#accountMenu,#accountPopover'))$('#accountPopover').classList.add('hidden');});
   $('#adminConsoleOpen').addEventListener('click',()=>adminConsole.open());
   els.loadMore.addEventListener('click',loadHistory);
-  window.addEventListener('beforeunload',()=>state.eventSource?.close());
+  window.addEventListener('beforeunload',()=>{state.eventSource?.close();stopSpeaking();});
 }
 let pendingHouseMessage='';
 function notifyHouse(data){if(window.parent!==window)window.parent.postMessage(data,location.origin);}
