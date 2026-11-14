@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <script src="./ui/browser-crypto.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#f4f9ff"/>
+  <meta name="description" content="Uoya 魚家，与小肥鱼一起生活。"/>
+  <title>Uoya 魚家</title>
+  <link rel="stylesheet" href="./ui/admin-panels.css">
+  <link rel="stylesheet" href="./ui/uoya-surface.css" data-uoya-surfaces>
+  <script defer src="./ui/react-bits-adapter.js"></script>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./ui/mobile.css">
+<script defer src="./ui/mobile.js"></script>
+<link rel="stylesheet" href="./ui/icons.css">
+<script src="./ui/icons.js"></script>
+<link rel="stylesheet" href="./ui/select.css">
+<script defer src="./ui/select.js"></script>
+  <script type="module" crossorigin src="./assets/index-B7IPTN-0.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-39OdgYD8.css">
+</head>
+<body>
+<div class="application">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-text"><strong>Uoya <span>魚家</span></strong></div>
+    </div>
+    <div class="header-actions"><button id="social-chat-open" class="soft-action" type="button">AI 聊天</button><button id="header-console-open" class="soft-action" type="button" hidden>控制台</button><button id="header-group-open" class="soft-action" type="button" hidden>群聊管理</button><span id="asset-status" class="asset-status">正在加载</span><div class="clock-badge"><strong id="local-clock">--:--</strong><small id="phase-status">自动昼夜</small></div></div>
+  </header>
+  <main class="stage">
+    <canvas id="world" aria-label="Uoya 魚家 住宅"></canvas>
+    <div class="stage-grid" aria-hidden="true"></div>
+    <aside class="right-column">
+<section class="panel lighting-panel" aria-label="智能照明">
+        <div class="card-top"><strong><span class="blue-icon">☼</span> 智能照明</strong></div>
+        <label class="light-switch"><span>智能开关</span><input type="checkbox" id="smart-lights" checked aria-label="智能开关"/></label>
+        <div class="lighting-footer"><button id="all-lights-on" type="button">全开</button><button id="all-lights-off" type="button">全关</button></div>
+        <div class="lighting-switches">
+          <label class="light-switch"><span>客厅吸顶灯</span><input type="checkbox" id="lamp-living-ceiling" aria-label="客厅吸顶灯开关"/></label>
+          <label class="light-switch"><span>厨房工作灯</span><input type="checkbox" id="lamp-kitchen-ceiling" aria-label="厨房工作灯开关"/></label>
+          <label class="light-switch"><span>卧室吸顶灯</span><input type="checkbox" id="lamp-bedroom-ceiling" aria-label="卧室吸顶灯开关"/></label>
+          <label class="light-switch"><span>卫生间吸顶灯</span><input type="checkbox" id="lamp-bathroom-ceiling" aria-label="卫生间吸顶灯开关"/></label>
+          <label class="light-switch"><span>客厅落地灯</span><input type="checkbox" id="lamp-floor-lamp" aria-label="客厅落地灯开关"/></label>
+          <label class="light-switch"><span>卧室床头灯</span><input type="checkbox" id="lamp-bed-lamp" aria-label="卧室床头灯开关"/></label>
+        </div>
+      </section>
+    </aside>
+    <div id="speech" class="speech" hidden>今天想去哪间房？</div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <button id="life-open" class="life-summary panel" type="button"><strong>生活与商店 <span id="life-coins">登录后同步</span></strong><small id="life-values">心情 · 饱食 · 无聊 · 补水</small></button>
+    <section class="command-panel panel">
+      <div class="agent-icon">✦<span></span></div>
+      <div class="agent-text"><strong>蓝色小肥鱼</strong></div>
+      <div id="command-media-drafts" class="uoya-media-drafts command-media-drafts" hidden></div><form id="command-form"><button id="command-attach" type="button" aria-label="上传图片或视频" disabled>＋</button><input id="command-input" type="text" autocomplete="off" maxlength="800" aria-label="消息输入" placeholder="和小肥鱼聊天，或告诉她想做什么…"/><button id="send-command" type="submit" aria-label="发送消息">↗</button></form>
+    </section>
+    <div class="loading-cover" id="loading-cover"><h2>欢迎回家</h2><div class="loading-track"><span id="loading-fill"></span></div><small id="loading-progress">正在准备场景</small></div>
+  </main>
+
+</div>
+<dialog id="life-dialog" aria-labelledby="life-title"><header class="social-chat-bar"><div><strong id="life-title">日常生活 · 商店与背包</strong></div><button id="life-close" type="button" aria-label="关闭生活面板">×</button></header><iframe id="life-frame" title="Uoya 魚家 生活系统"></iframe></dialog>
+<dialog id="social-chat-dialog" aria-labelledby="social-chat-title">
+ <header class="social-chat-bar"><div><strong id="social-chat-title">蓝色小肥鱼 · AI 聊天</strong><small id="social-chat-status"></small></div><button id="social-chat-close" type="button" aria-label="关闭聊天">×</button></header>
+ <iframe id="social-chat-frame" title="Uoya 魚家 AI 共享聊天室" allow="autoplay"></iframe>
+</dialog>
+</body>
+</html>

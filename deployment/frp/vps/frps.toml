@@ -1,0 +1,13 @@
+# FRP server; this file is read inside a container.
+# Only 7000 is published to the internet. 8080 is reachable ONLY from Caddy
+# on the Docker internal network.
+bindPort = 7000
+vhostHTTPPort = 8080
+transport.tls.force = true
+
+# Token is not stored in this config.
+auth.method = "token"
+auth.tokenSource.type = "file"
+auth.tokenSource.file.path = "/etc/frp/secret/token"
+
+# No frps dashboard enabled. Do NOT expose the dashboard to the internet.

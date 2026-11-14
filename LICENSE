@@ -1,0 +1,55 @@
+MIT License
+
+Copyright (c) 2026 Blue Haven WebGL Project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Kenney furniture assets remain CC0 and are not relicensed under MIT.
+The VRM character below is a separate third-party asset and is not covered by the project MIT license.
+
+
+第三方角色模型来源 / Third-party character attribution
+
+模型名称：蓝色小肥鱼 Deepseek鲸鱼娘
+模型制作者：木子恶魔/MZEM
+发布平台：模之屋
+联系方式：https://space.bilibili.com/95816706
+本模型版权及使用条件归原作者所有；上述署名不构成 MIT 或 CC0 授权。
+模型内嵌 VRM 元数据及原作者提供的使用条款继续适用。
+
+VRM runtime: @pixiv/three-vrm 3.5.5, MIT; see public/assets/avatar/THREE-VRM-LICENSE.
+
+模型内嵌 VRM 1.0 元数据摘要（原始声明，署名不改变这些条件）：
+作者：木子恶魔；avatarPermission: onlyAuthor；commercialUsage: personalNonProfit；creditNotation: required；allowRedistribution: false；modification: prohibited。
+许可链接：https://vrm.dev/licenses/1.0/
+
+
+Integrated chat module: Blue Haven AI Social Chat v1.0
+Copyright (c) 2026 Blue Haven Chat Contributors, MIT.
+The complete notice is retained in server/social-chat/LICENSE and public/social-chat/LICENSE.txt.
+
+
+LongMemory Hydrograph (local source integration)
+Copyright (c) 2026 CaviraOSS / cavira oss and nullure. Apache License 2.0.
+The local engine source is unmodified; the backend bundle, schema, full license and NOTICE are in server/social-chat/vendor/longmemory/.
+The Apache-2.0 component is not relicensed under the project MIT license.
+
+
+Blue Haven Life & Economy System v1.0, MIT.
+Original notice retained in server/life/LICENSE and public/life/LICENSE.txt.

@@ -1,0 +1,33 @@
+# 在具有公网 IPv4 的 VPS 上执行。运行前先放置 secrets/token、修改 Caddyfile 域名。
+services:
+  frps:
+    image: ghcr.io/fatedier/frps:v0.72.0
+    restart: unless-stopped
+    command: ["-c", "/etc/frp/frps.toml"]
+    ports:
+      - "7000:7000/tcp"
+    volumes:
+      - ./frps.toml:/etc/frp/frps.toml:ro
+      - ./secrets/token:/etc/frp/secret/token:ro
+    networks: [tunnel]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [tunnel]
+    depends_on: [frps]
+
+networks:
+  tunnel:
+    driver: bridge
+volumes:
+  caddy_data:
+  caddy_config:

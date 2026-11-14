@@ -1,0 +1,14 @@
+import {randomBytes} from 'node:crypto';import {existsSync,mkdirSync,readFileSync,writeFileSync,statSync} from 'node:fs';import path from 'node:path';import net from 'node:net';
+export function networkPaths(root){const directory=path.join(root,'.network');return {directory,settings:path.join(directory,'settings.json'),config:path.join(directory,'frpc.toml'),token:path.join(directory,'token')};}
+export function validPort(value){const port=Number(value);if(!Number.isSafeInteger(port)||port<1||port>65535)throw Error('端口必须是 1–65535');return port;}
+function host(value){if(typeof value!=='string'||value.length>253||!value||!(net.isIP(value)||/^(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$/.test(value))||value.includes('..'))throw Error('请输入有效的服务器地址');return value;}
+export function configureNetwork(root,options){
+ const domain=host(options.domain);if(net.isIP(domain)||!domain.includes('.'))throw Error('HTTP 域名隧道需要完整域名');const server=host(options.server),port=validPort(options.port??7000),webPort=validPort(options.webPort??8080),files=networkPaths(root);
+ const token=options.tokenFile?path.resolve(options.tokenFile):files.token;if(options.tokenFile&&(!existsSync(token)||!statSync(token).isFile()))throw Error('Token 文件不存在');
+ const ca=options.caFile?path.resolve(options.caFile):null;if(ca&&!existsSync(ca))throw Error('CA 文件不存在');
+ mkdirSync(files.directory,{recursive:true});if(options.tokenValue!==undefined){if(typeof options.tokenValue!=='string'||options.tokenValue.length<8||options.tokenValue.length>512||/[\x00-\x20]/.test(options.tokenValue))throw Error('Token 格式无效');writeFileSync(token,options.tokenValue,{mode:0o600});}else if(!existsSync(token))writeFileSync(token,randomBytes(32).toString('hex'),{mode:0o600,flag:'wx'});if(!readFileSync(token,'utf8').trim())throw Error('Token 文件不能为空');
+ const settings={server,domain,serverPort:port,webPort,publicOrigin:'https://'+domain,frpc:options.frpc?path.resolve(options.frpc):'frpc',tokenFile:token,caFile:ca};
+ const quote=value=>JSON.stringify(value);const toml=`# Uoya 魚家 — generated; token kept in a separate file\nserverAddr = ${quote(server)}\nserverPort = ${port}\ntransport.tls.enable = true\n${ca?'transport.tls.trustedCaFile = '+quote(ca)+'\n':''}auth.method = "token"\nauth.tokenSource.type = "file"\nauth.tokenSource.file.path = ${quote(token)}\n\n[[proxies]]\nname = "uoya-home"\ntype = "http"\nlocalIP = "127.0.0.1"\nlocalPort = ${webPort}\ncustomDomains = [${quote(domain)}]\nhealthCheck.type = "http"\nhealthCheck.path = "/social-api/api/health"\nhealthCheck.intervalSeconds = 10\nhealthCheck.timeoutSeconds = 3\nhealthCheck.maxFailed = 3\n`;
+ writeFileSync(files.config,toml,{mode:0o600});writeFileSync(files.settings,JSON.stringify(settings,null,2),{mode:0o600});return settings;
+}
+export function readNetwork(root){const files=networkPaths(root);return existsSync(files.settings)?JSON.parse(readFileSync(files.settings,'utf8')):null;}

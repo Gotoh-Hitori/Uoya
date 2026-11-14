@@ -1,0 +1,23 @@
+# Replace both placeholders before running frpc.
+serverAddr = "YOUR_VPS_IP_OR_DOMAIN"
+serverPort = 7000
+
+transport.tls.enable = true
+# SECURITY: With the baseline random certificate, TLS encrypts traffic but
+# the frpc client does not verify server identity. For production, set up a
+# CA-signed certificate on frps and trustedCaFile on frpc (see README).
+auth.method = "token"
+auth.tokenSource.type = "file"
+auth.tokenSource.file.path = "/etc/frp/secret/token"
+
+[[proxies]]
+name = "uoya-home"
+type = "http"
+localIP = "127.0.0.1"
+localPort = 8080
+customDomains = ["chat.example.com"]
+healthCheck.type = "http"
+healthCheck.path = "/social-api/api/health"
+healthCheck.intervalSeconds = 10
+healthCheck.timeoutSeconds = 3
+healthCheck.maxFailed = 3

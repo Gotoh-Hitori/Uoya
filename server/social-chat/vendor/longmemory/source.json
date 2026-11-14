@@ -1,0 +1,8 @@
+{
+  "name": "longmemory",
+  "version": "1.0.0",
+  "source": "LongMemory-main/LongMemory-main",
+  "entry": "src/core/create_memory.ts",
+  "sha256": "1afb53f6fc1a0b3f965e2c80528e7c64b9a13c0642854e62deb493c389c1fdb2",
+  "license": "Apache-2.0"
+}

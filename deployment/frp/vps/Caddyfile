@@ -1,0 +1,15 @@
+# Replace chat.example.com with your real domain before startup.
+# DNS A/AAAA must point at the VPS; ports 80/443 must be open for HTTPS.
+chat.example.com {
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "no-referrer"
+    }
+
+    # Caddy preserves Host and forwards SSE responses immediately when the
+    # upstream uses Content-Type: text/event-stream.
+    reverse_proxy frps:8080 {
+        flush_interval -1
+    }
+}

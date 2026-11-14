@@ -1,0 +1,30 @@
+name: uoya-release-v1
+services:
+  app:
+    build:
+      context: .
+      args:
+        FRP_VERSION: v0.72.0
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      WEB_HOST: 0.0.0.0
+      WEB_PORT: 8080
+      CHAT_API_PORT: 3001
+      FRPC_PATH: /usr/local/bin/frpc
+      NETWORK_ROOT: /state
+      DATABASE_FILE: /app/server/social-chat/data/bluehaven.sqlite
+      PERSONA_FILE: /app/server/social-chat/data/persona.md
+    volumes:
+      - app_data:/app/server/social-chat/data
+      - network_state:/state
+
+volumes:
+  app_data:
+  network_state:

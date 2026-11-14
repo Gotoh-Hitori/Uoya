@@ -1,0 +1,11 @@
+# Linux ONLY: host networking permits connecting to 127.0.0.1:8080 of the
+# actual LAN host. On Windows / macOS run the official frpc binary natively.
+services:
+  frpc:
+    image: ghcr.io/fatedier/frpc:v0.72.0
+    restart: unless-stopped
+    network_mode: host
+    command: ["-c", "/etc/frp/frpc.toml"]
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro
+      - ./secrets/token:/etc/frp/secret/token:ro

@@ -1,0 +1,23 @@
+/* All select triggers and popups use the same local design. */
+body .uoya-select{display:inline-flex;position:relative;min-width:0;width:100%;vertical-align:middle}
+body select.uoya-native-select{display:none!important}
+body .uoya-select>.uoya-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;min-height:42px;height:44px;margin:0;padding:0 13px;border:1px solid #d6e6f6;border-radius:12px;background:#fff;color:#315d89;font:inherit;font-size:13px;line-height:1.4;text-align:left;cursor:pointer;box-sizing:border-box;white-space:nowrap}
+body .uoya-select-value{display:block;overflow:hidden;text-overflow:ellipsis;min-width:0}
+body .uoya-select-trigger>svg{display:block;width:17px;height:17px;flex:none;transition:transform .16s}
+body .uoya-select-trigger[aria-expanded=true]{border-color:#70aaf0;box-shadow:0 0 0 3px #8ec2ff25}
+body .uoya-select-trigger[aria-expanded=true]>svg{transform:rotate(180deg)}
+body .uoya-select-trigger:focus-visible{outline:2px solid #70aaf0;outline-offset:3px}
+body .uoya-select-trigger:disabled{opacity:.5;cursor:not-allowed}
+body .uoya-select-menu{position:fixed;inset:auto;margin:0;padding:5px;border:1px solid #d6e6f6;border-radius:14px;background:#fff;color:#315d89;box-shadow:0 12px 32px #244e7926;overflow:auto;overscroll-behavior:contain;z-index:2147483647;box-sizing:border-box;font:13px/1.4 system-ui,sans-serif}
+body .uoya-select-menu::backdrop{background:transparent;pointer-events:none}
+body .uoya-select-option{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:40px;padding:9px 12px;border-radius:9px;cursor:pointer;box-sizing:border-box;overflow-wrap:anywhere}
+body .uoya-select-option.is-active{background:#edf5ff;color:#296dba}
+body .uoya-select-option[aria-selected=true]{color:#2674d1;background:#e8f2ff;font-weight:600}
+body .uoya-select-option[aria-disabled=true]{opacity:.4;cursor:not-allowed}
+body .uoya-select-option>svg{width:17px;height:17px;flex:none}
+body .group-management .group-toolbar>.uoya-select{align-self:center}
+body .group-management .group-actions>.uoya-select{flex:1 1 100%}
+body .group-management .group-actions .uoya-select-trigger{height:40px;min-height:40px;font-size:12px}
+body .uoya-select[hidden]{display:none!important}
+@media(max-width:540px){body .group-management .group-actions>.uoya-select{flex:1 1 110px}body .uoya-select>.uoya-select-trigger{font-size:14px;min-height:44px}body .uoya-select-option{min-height:44px;font-size:14px}}
+@media(prefers-reduced-motion:reduce){body .uoya-select-trigger>svg{transition:none}}
