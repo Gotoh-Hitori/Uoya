@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {createFurnitureActions} from '../src/agent/furniture-actions.js';
+function fixture(){let time=0;const root=new THREE.Group(),holder=new THREE.Group(),model=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial());holder.add(model);const scene=new THREE.Scene();scene.add(root,holder);const events=[];const actions=createFurnitureActions({root,motion:{position:{x:0,z:2}},getActor:()=>({}),getFurniture:()=>({holder,model}),speak:()=>{},onState:()=>{},onLifeComplete:id=>events.push(id),now:()=>time});return {actions,events,advance:ms=>time+=ms,close(){model.geometry.dispose();model.material.dispose();}};}
+test('food completion uses elapsed wall time even when only two low-frame-rate updates occur',()=>{const x=fixture();try{x.actions.start({id:'fridge',x:0,z:0});x.advance(7999);x.actions.update(.055);assert.equal(x.events.length,0);x.advance(1);x.actions.update(.055);assert.deepEqual(x.events,['fridge']);assert.equal(x.actions.state,null);x.actions.update(.055);assert.equal(x.events.length,1);}finally{x.close();}});
+test('cancelling before duration does not settle a furniture action',()=>{const x=fixture();try{x.actions.start({id:'fridge',x:0,z:0});x.advance(3000);x.actions.update(.055);x.actions.cancel();x.advance(10000);x.actions.update(.055);assert.deepEqual(x.events,[]);}finally{x.close();}});

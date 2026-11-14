@@ -1,0 +1,19 @@
+Uoya
+Copyright (c) 2026 Uoya contributors
+SPDX-License-Identifier: GPL-3.0-only
+
+Project-owned code is licensed under GNU GPL version 3 only; see LICENSE.
+Existing upstream copyright and license notices remain applicable to their components.
+The former project MIT notice is preserved in docs/licenses/UOYA-LEGACY-MIT.txt.
+Previously granted MIT permissions are not revoked.
+
+Third-party components and assets are not automatically relicensed:
+- Chat and Life integrations: original MIT notices in server/*/LICENSE and public/*/LICENSE.txt.
+- LongMemory: Apache-2.0; see server/social-chat/vendor/longmemory/LICENSE and NOTICE.
+- Three.js and three-vrm: MIT; see docs/licenses and public/assets/avatar/THREE-VRM-LICENSE.
+- Kenney furniture: CC0; see public/assets/provenance.json and docs/licenses.
+- React Bits-derived UI: MIT + Commons Clause; see docs/licenses/react-bits. These additional restrictions are not GPL terms. This distribution must not be represented as entirely GPL-only; compatibility of a combined derivative distribution requires separate review, permission, or replacement of restricted components.
+- Character VRM: separate author terms and attribution retained in the legacy notice and model metadata; the owner confirms permission. The model is not GPL-licensed.
+- npm dependencies: respective upstream licenses.
+
+Only project-owned code is changed to GPL-3.0-only. No additional rights to third-party material are granted by this notice.

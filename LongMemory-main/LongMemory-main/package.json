@@ -1,0 +1,92 @@
+{
+    "name": "longmemory",
+    "version": "1.0.0",
+    "description": "LongMemory Hydrograph TypeScript package: library, CLI, self-hosted API server, and benchmark harness.",
+    "license": "Apache-2.0",
+    "author": "CaviraOSS",
+    "homepage": "https://github.com/CaviraOSS/LongMemory#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CaviraOSS/LongMemory.git"
+    },
+    "bugs": {
+        "url": "https://github.com/CaviraOSS/LongMemory/issues"
+    },
+    "keywords": [
+        "ai",
+        "agents",
+        "memory",
+        "mcp",
+        "sqlite",
+        "temporal"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "packageManager": "pnpm@11.5.2",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "bin": {
+        "longmemory": "dist/cli/index.js"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "docs",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/stores/sqlite',{recursive:true});fs.copyFileSync('src/stores/sqlite/schema.sql','dist/stores/sqlite/schema.sql')\"",
+        "start": "node dist/server/index.js",
+        "dev": "node --import tsx src/cli/index.ts status",
+        "bench": "tsx benchmarks/src/cli.ts run --providers=longmemory --datasets=smoke --no-resume",
+        "bench:full": "tsx benchmarks/src/official.ts --providers=longmemory --per-category=10000 --cutoffs=5 --no-resume",
+        "bench:ci": "tsx benchmarks/src/cli.ts run --providers=longmemory --datasets=smoke --run-id=ci-smoke --out=benchmarks/runs/ci-smoke --no-resume --require-all --gate --no-color",
+        "bench:ci:full": "tsx benchmarks/src/official.ts --providers=longmemory --per-category=3 --run-id=ci-public --out=benchmarks/runs/ci-public --no-resume --require-all --gate --no-color",
+        "bench:data": "tsx benchmarks/src/cli.ts data",
+        "bench:public": "pnpm bench:data && pnpm bench:ci:full",
+        "bench:core": "tsx benchmarks/src/cli.ts run --providers=longmemory --datasets=smoke --run-id=core-smoke --out=benchmarks/runs/core-smoke --no-resume --require-all --gate --no-color",
+        "bench:quality": "node --env-file=benchmarks/comparative.env --import tsx benchmarks/src/official.ts --providers=longmemory --per-category=3 --cutoffs=5 --no-resume --require-all",
+        "bench:compare": "pnpm bench:quality",
+        "bench:judge": "tsx benchmarks/src/cli.ts run --providers=longmemory --datasets=smoke --answerer=openai:gpt-4.1-mini --judge=openai:gpt-4.1 --no-resume",
+        "bench:judge:copilot": "tsx benchmarks/src/cli.ts run --providers=longmemory --datasets=smoke --answerer=copilot-answerer:gpt-5.6-luna --judge=copilot-judge:gpt-5.6-luna --no-resume",
+        "bench:judge:codex": "pnpm bench:judge:copilot",
+        "bench:typecheck": "tsc --noEmit -p benchmarks/tsconfig.json",
+        "bench:check": "tsx benchmarks/src/check.ts",
+        "serve": "tsx src/server/index.ts",
+        "extension:check": "pnpm --dir apps/vscode-extension check",
+        "extension:build": "pnpm --dir apps/vscode-extension compile",
+        "extension:package": "pnpm --dir apps/vscode-extension package",
+        "dashboard:audit": "npm --prefix dashboard audit --audit-level=moderate",
+        "sdk:python:check": "node tools/check-python-sdk.mjs",
+        "integration:n8n:lint": "pnpm --dir integrations/n8n-nodes-longmemory lint",
+        "integration:n8n:build": "pnpm --dir integrations/n8n-nodes-longmemory build",
+        "integration:claude:validate": "claude plugin validate ./integrations/claude-code-longmemory --strict",
+        "integration:check": "pnpm integration:n8n:lint && pnpm integration:n8n:build && node tools/check-integrations.mjs",
+        "release:files": "node tools/check-release-files.mjs",
+        "branding:apply": "node tools/branding.mjs --apply",
+        "branding:check": "node tools/branding.mjs",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "recall:check": "tsx tools/check-recall.ts",
+        "release:check": "pnpm branding:check && pnpm release:files && pnpm sdk:python:check && pnpm dashboard:audit && pnpm typecheck && pnpm recall:check && pnpm extension:check && pnpm integration:check && pnpm bench:typecheck && pnpm bench:ci && pnpm build && pnpm extension:build && npm --prefix dashboard run build"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^20.19.25",
+        "@types/turndown": "^5.0.6",
+        "tsx": "^4.20.6",
+        "typescript": "^5.9.3",
+        "yaml": "^2.8.1"
+    },
+    "dependencies": {
+        "@aws-sdk/client-bedrock-runtime": "^3.1093.0",
+        "@modelcontextprotocol/sdk": "^1.29.0",
+        "better-sqlite3": "^12.11.1",
+        "mammoth": "^1.12.0",
+        "pdf-parse": "^2.4.5",
+        "stemmer": "^2.0.1",
+        "turndown": "^7.2.4",
+        "zod": "^4.4.3"
+    }
+}

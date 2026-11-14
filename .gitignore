@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.env
+.env.*.local
+.DS_Store
+
+# Integrated chat persistence
+server/social-chat/data/
+server/social-chat/.env
+
+# Local LongMemory development state
+LongMemory-main/**/node_modules/
+LongMemory-main/**/.longmemory/
+LongMemory-main/**/*.db*
+
+# Network deployment credentials
+.network/
+
+# Container runtime secrets
+.env.docker

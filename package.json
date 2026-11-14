@@ -1,0 +1,38 @@
+{
+  "name": "uoya",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "description": "Uoya Release v1.0",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/verify-assets.mjs && vite build --configLoader runner",
+    "preview": "vite preview --configLoader runner",
+    "test": "node --test tests/*.test.mjs",
+    "assets": "node scripts/download-assets.mjs",
+    "ai-server": "node server/ai-bridge.mjs",
+    "chat-server": "node scripts/dev.mjs --chat-only",
+    "dev:web": "vite --configLoader runner",
+    "test:chat": "node --test server/social-chat/tests/*.test.mjs tests/chat-integration.test.mjs",
+    "memory:build": "node scripts/build-longmemory.mjs",
+    "postinstall": "npm run memory:build",
+    "test:memory": "node --test server/social-chat/tests/memory.test.mjs",
+    "test:life": "node --test server/life/tests/*.test.mjs server/social-chat/tests/life-integration.test.mjs",
+    "start": "node scripts/start.mjs",
+    "test:network": "node --test tests/network.test.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "stemmer": "^2.0.1",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "vite": "^7.1.9"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "displayName": "Uoya"
+}

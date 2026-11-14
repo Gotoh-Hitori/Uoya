@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <script src="/ui/browser-crypto.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6f9ff" />
+  <title>Uoya · 生活与金币商店</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="/ui/uoya-surface.css" data-uoya-surfaces>
+  <script defer src="/ui/react-bits-adapter.js"></script>
+<link rel="stylesheet" href="/ui/icons.css">
+<script src="/ui/icons.js"></script>
+<link rel="stylesheet" href="/ui/select.css">
+<script defer src="/ui/select.js"></script>
+</head>
+<body>
+<div class="layout">
+<main class="main">
+    <div class="page-content">
+      <div class="page-title"><div><div class="eyebrow blue">YOUR LITTLE WORLD</div><h2>日常生活 <span>生活状态与商店</span></h2></div></div>
+
+      <section class="stats-section"><div class="section-title"><div><h3>我的生活状态</h3></div><span id="moodChip" class="mood-chip">☀ 平静</span></div>
+        <div class="stat-grid" id="statsGrid">
+          <div class="stat-card skeleton">正在读取数据...</div>
+        </div>
+      </section>
+
+      <details id="customItemPanel" class="glass custom-item-panel" hidden>
+        <summary>＋ 创建商品</summary>
+        <form id="customItemForm" class="custom-item-form">
+          <label>商品名称<input name="name" required maxlength="60"/></label>
+          <label>商品图标<select name="emoji"><option value="gift">礼物</option><option value="food">食物</option><option value="drink">饮料</option><option value="snack">零食</option><option value="toy">玩具</option><option value="heart">爱心</option><option value="star">星星</option></select></label>
+          <label>分类<select name="category"><option value="food">食物</option><option value="drink">饮料</option><option value="snack">零食</option><option value="toy">小玩具</option></select></label>
+          <label>价格（金币）<input name="price" type="number" min="1" max="1000000" step="1" value="10" required/></label>
+          <label>每件使用次数<input name="uses" type="number" min="1" max="1000" step="1" value="1" required/></label>
+          <label>使用冷却（秒）<input name="cooldownSec" type="number" min="0" max="86400" step="1" value="0" required/></label>
+          <label>心情变化<input name="mood" type="number" min="-100" max="100" step="1" value="0" required/></label>
+          <label>饱食度变化<input name="satiety" type="number" min="-100" max="100" step="1" value="0" required/></label>
+          <label>无聊度变化<input name="boredom" type="number" min="-100" max="100" step="1" value="0" required/></label>
+          <label>补水度变化<input name="hydration" type="number" min="-100" max="100" step="1" value="0" required/></label>
+          <label class="wide">商品描述<textarea name="description" maxlength="500" rows="2"></textarea></label>
+          <p class="wide">效果填正数增加、负数减少；无聊度越低越好。商品创建后会立即上架。</p>
+          <button type="submit">创建并上架</button>
+        </form>
+      </details>
+      <section class="shop-section"><div class="section-title"><div><h3>AI的小商店</h3></div><span id="shopCount" class="count-label">19 种商品</span></div>
+        <div class="filterbar" id="filters" role="group" aria-label="商品分类">
+          <button type="button" class="selected" data-category="all">全部商品</button>
+          <button type="button" data-category="food">🍚 食物</button>
+          <button type="button" data-category="drink">🥤 饮料</button>
+          <button type="button" data-category="snack">🍪 零食</button>
+          <button type="button" data-category="toy">🧸 小玩具</button>
+        </div>
+        <div id="catalogGrid" class="catalog-grid"><div class="loadingMessage">加载商店中…</div></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="rightbar">
+    <div class="balance-card"><div class="coin-medallion">✦</div><div><span>我的钱包余额</span><strong id="coinBalance">—</strong></div></div>
+    <section class="tip-panel"><div class="ai-wallet"><span id="aiWalletName">AI 钱包</span><strong id="aiCoinBalance">—</strong></div><form id="tipForm"><input id="tipAmount" type="number" min="1" max="100000" step="1" value="10" aria-label="爆金币数量" required><button id="tipButton" type="submit" disabled>爆金币</button></form></section>
+    <div class="right-head"><div><div class="eyebrow">YOUR COLLECTION</div><h3>我的背包</h3></div><span id="inventoryCount" class="inventory-counter">0</span></div>
+    <div class="inventory-list" id="inventoryList"><p class="empty">背包还是空的，去商店看看吧。</p></div>
+    <div class="section-title activity-title"><div><h3>最近动态</h3></div></div>
+    <div class="activity-list" id="activityList"><p class="empty">暂无动态。</p></div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="life-auth" class="life-auth"><section><h2>登录后开启日常生活</h2><button id="life-login" type="button">前往登录 / 注册</button></section></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

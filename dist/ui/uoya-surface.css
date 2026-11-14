@@ -1,0 +1,193 @@
+/* Uoya 魚家 — shared light surfaces. Spotlight treatment adapted from
+ * React Bits by David Haz. See docs/licenses/react-bits/LICENSE.md. */
+:root{--uoya-surface:#fff;--uoya-soft:#f4f9ff;--uoya-border:#dce9f8;--uoya-ink:#294c72;--uoya-muted:#6e89a6;--uoya-blue:#428ce8;--uoya-shadow:0 20px 65px -24px #6b9ac53d;color-scheme:light}
+body{accent-color:var(--uoya-blue)}
+body button,body a,body input,body select,body textarea{ -webkit-tap-highlight-color:transparent}
+body button{transition:background .18s,border-color .18s,box-shadow .18s,transform .18s}
+body button:not(:disabled):hover{box-shadow:0 4px 14px #6c9dd326}
+body button:not(:disabled):active{transform:translateY(1px)}
+body :is(button,a,input,select,textarea):focus-visible{outline:2px solid #74b2f0;outline-offset:3px}
+body input::placeholder,body textarea::placeholder{color:#8da6bf;opacity:1}
+body dialog{color-scheme:light}
+body dialog::backdrop{background:#224b713d;backdrop-filter:blur(9px)}
+body dialog[open]{animation:uoya-reveal .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes uoya-reveal{from{opacity:0;translate:0 9px;scale:.992}to{opacity:1;translate:0 0;scale:1}}
+/* Shared surfaces; positional layout and gameplay remain owned by their modules. */
+body .panel{background:linear-gradient(145deg,#ffffffed,#eff7fff2);border:1px solid #ffffffdf;box-shadow:0 10px 32px #224b711a,inset 0 0 0 1px #d6e7f680;backdrop-filter:blur(18px)}
+body .header{background:#f8fcfff0;border-bottom-color:#dceaf6}
+body .logo-mark,body .agent-icon{box-shadow:0 7px 20px #5294de26,inset 0 1px 0 #ffffff70}
+body .command-panel{border-radius:22px;padding:12px 14px}
+body #command-form{border-radius:14px;background:#ffffffa6;border:1px solid #d7e9fa;padding:3px}
+body #command-form:focus-within{border-color:#91bff0;box-shadow:0 0 0 4px #9ed0ff1f}
+body #command-form input{background:transparent}
+body .latest-message{border-radius:22px;box-shadow:0 16px 40px #193e6924;line-height:1.6}
+body .latest-message-heading{padding-bottom:7px;border-bottom:1px solid #bcd6ed61;margin-bottom:9px}
+body .avatar-life{border-color:#dfecf8;background:linear-gradient(150deg,#ffffffed,#f0f8fff0);box-shadow:var(--uoya-shadow)}
+body .avatar-metric progress{border-radius:10px}
+body .chat-panel{background:linear-gradient(165deg,#fff,#f8fbff);border-color:#e4eef9}
+body .chat-header{background:#ffffffeb;border-bottom-color:#e5eef8}
+body .small-button,body .icon-button,body .account-card{border-color:#dce9f7;background:#f5faff;color:#4d7ca9}
+body .account-popover{border:1px solid #e1edf9;box-shadow:0 18px 50px #4572a51c;border-radius:20px}
+body .composer{background:#f5faff;border-color:#dceafa;border-radius:20px;box-shadow:0 5px 22px #789fc40d}
+body .composer:focus-within{border-color:#95bfef;box-shadow:0 0 0 4px #9dccff21}
+body .send-button,body .auth-submit{background:linear-gradient(125deg,#3c85df,#6aa9ed);box-shadow:0 7px 18px #5797df33}
+body .msg-content{border-radius:6px 19px 19px;background:#f0f6fd;border-color:#e1ecf8;box-shadow:0 3px 10px #7397bd08}
+body .mine .msg-content{border-radius:19px 6px 19px 19px;background:linear-gradient(135deg,#498ee1,#64a4ec);border-color:#6ba5e6;color:#fff}
+body .msg.ai-message .msg-content{background:linear-gradient(140deg,#f2f8ff,#edf5ff);border-color:#dceafa}
+body .auth-modal{border-radius:30px;border:1px solid #ffffff;box-shadow:0 28px 90px #588bc324,inset 0 0 0 1px #e2edf7;background:linear-gradient(150deg,#fff,#f8fbff);animation:uoya-reveal .4s ease-out}
+/* A single, light console for AI settings, network, runtime and group management. */
+body .admin-console{background:linear-gradient(150deg,#fff,#f5faff);color:var(--uoya-ink);border:1px solid #d8e8f8;border-radius:26px;box-shadow:0 30px 100px #244f7c33;padding:0;overflow:hidden}
+body .admin-console[open]:not(.group-management){display:flex;flex-direction:column}
+body .admin-console>header{padding:20px 25px;border-bottom:1px solid #e2edf8;background:#ffffffd9;flex:none}
+body .admin-console>header strong{font-size:18px;letter-spacing:.02em;color:#2c547f}
+body .admin-console nav{gap:6px;margin:14px 22px 10px;padding:5px;border:1px solid #e2edf8;border-radius:15px;background:#edf5fe;overflow-x:auto;flex-wrap:nowrap;min-height:47px;box-sizing:border-box}
+body .admin-console nav button{flex:1;white-space:nowrap;padding:9px 12px;border-color:transparent;background:transparent;color:#6b87a6;font-weight:650;border-radius:11px}
+body .admin-console nav [aria-selected=true]{background:#fff;color:#337aca;box-shadow:0 3px 10px #4d82ba14;border-color:#e0ebf8}
+body .admin-console button{border:1px solid #d5e6f7;background:#eff7ff;color:#3c7cbd;border-radius:11px;padding:9px 13px;font:inherit;font-size:12px}
+body .admin-console button:not(:disabled):hover{background:#e4f1ff;border-color:#afd2f5}
+body .admin-console [data-view]{height:auto!important;flex:1;min-height:0;padding:8px 24px 24px;overflow:auto;scrollbar-color:#c3daf0 transparent}
+body .admin-console [data-view=terminal]{display:flex;gap:14px;flex-direction:column}
+body .admin-console [hidden]{display:none!important}
+body .admin-console .settings-pane{width:100%;max-width:760px}
+body .admin-console .settings-pane section{height:auto;border-color:#e0ebf7;padding:14px 0 22px;background:transparent}
+body .admin-console .settings-pane form{padding:20px 0;gap:18px}
+body .admin-console input,body .admin-console select,body .admin-console textarea,body .group-quota input,body .group-actions select,body .group-toolbar select{background:#fff;color:#2b5279;border:1px solid #d6e6f6;border-radius:11px;padding:11px 12px;box-shadow:0 2px 5px #7c9db508;min-width:0;font-family:inherit}
+body .admin-console input:focus,body .admin-console textarea:focus,body .admin-console select:focus{border-color:#87b6e8;box-shadow:0 0 0 3px #9dc8f321}
+body .admin-console label{color:#486e94;font-size:12px;line-height:1.5}
+body .admin-console h3{font-size:13px;color:#3d6d9d;margin:18px 0 12px}
+body .settings-pane small,body .settings-pane p,body .console-metrics small,body .group-identity small,body .group-usage small,body .group-management [data-summary],body .group-management [data-status]{color:#6b86a2}
+body .settings-pane button[type=submit],body .settings-pane [data-profile-save]{background:linear-gradient(120deg,#438bdf,#69a9ed);border-color:#6ca6e7;color:#fff;box-shadow:0 4px 13px #4e8ed324}
+body .admin-console .settings-pane :is(button[type=submit],[data-profile-save],[data-start]):not(:disabled):hover{background:linear-gradient(120deg,#357bd0,#579be6);color:#fff;border-color:#5b99df}
+body .settings-pane input[type=checkbox]{width:16px;height:16px;padding:0;box-shadow:none;accent-color:#4b90df}
+body .console-metrics{gap:12px}
+body .console-metrics>div{border:1px solid #dfebf7;background:linear-gradient(140deg,#fff,#edf6ff);box-shadow:0 3px 12px #5987b40a;padding:17px;border-radius:17px}
+body .console-metrics strong{color:#326ba8;font-size:21px;letter-spacing:-.03em}
+body .admin-console pre{color:#4c7094;font:12px/1.85 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}
+body .admin-console :is([data-logs],[data-audit],[data-network-logs],.terminal-output){padding:17px;background:#edf5fd;border:1px solid #dce9f6;border-radius:15px;box-sizing:border-box}
+body .admin-console [data-command]{padding:10px;background:#f0f7ff;border:1px solid #dbe9f7;border-radius:15px;align-items:center;flex-wrap:nowrap}
+body .terminal-output .command{color:#2f7bc5}
+body .terminal-output .error{color:#bf5161}
+body 
+body 
+body 
+body .settings-actions{display:flex;gap:8px;flex-wrap:wrap}
+body .group-member{border-bottom-color:#dfeaf6}
+body .group-avatar{background:#dfedfc;color:#4784c3}
+body .group-actions .danger{background:#fff3f4;border-color:#f1d1d6;color:#b34e60}
+body .admin-console.group-management .group-body{padding:18px 24px;min-height:0}
+/* Shop and inventory use the same calm blue-white materials. */
+body .product-card,body .stat-card,body .inventory-item,body .inv-item{border-color:#dce9f6;box-shadow:0 7px 24px #739bc00c;border-radius:20px}
+body .product-card:hover{border-color:#a8ccf0;box-shadow:0 12px 28px #7aa8d624;transform:translateY(-3px)}
+body .filterbar button{border-radius:12px}
+body .filterbar button.selected{background:#e6f2ff;border-color:#96c3f1;box-shadow:0 3px 9px #679bd214}
+body .product-emoji{background:linear-gradient(135deg,#e9f4ff,#f5faff);border:1px solid #e4eef9;border-radius:17px}
+/* React Bits SpotlightCard: DOM adaptation, pointer-transparent decoration. */
+.rb-surface{isolation:isolate}
+.product-card.rb-surface,.stat-card.rb-surface,.console-metrics>div.rb-surface,.auth-modal.rb-surface{position:relative}
+.rb-spotlight{position:absolute;inset:0;border-radius:inherit;pointer-events:none!important;z-index:0;opacity:0;transition:opacity .28s;box-shadow:inset 0 0 0 1px #83b8ed30;background:radial-gradient(240px circle at var(--rb-x,50%) var(--rb-y,50%),#a9d5ff47,transparent 75%)}
+.rb-surface[data-rb-active=true]>.rb-spotlight{opacity:1}
+@media(max-width:720px){body .admin-console{width:calc(100vw - 16px);height:min(90dvh,850px);max-height:94dvh;border-radius:22px}body .admin-console>header{padding:16px 17px}body .admin-console nav{margin:10px 12px 8px;min-height:44px}body .admin-console nav button{padding:8px;font-size:11px}body .admin-console [data-view]{padding:6px 16px 18px}body .console-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}body .admin-console [data-command]{gap:6px}body .admin-console [data-command] label{display:none}body .command-panel{border-radius:17px;padding:8px}body }
+@media(prefers-reduced-motion:reduce){body dialog[open],body .auth-modal{animation:none}body button,body .product-card,.rb-spotlight{transition:none}.rb-spotlight{display:none}}
+
+
+
+
+/* Custom avatar file picker: the native input stays accessible, its chrome is hidden. */
+body .uoya-file-picker{position:relative;display:flex;align-items:center;gap:14px;min-height:58px;padding:10px 13px;border:1px dashed #bcd6f1;border-radius:14px;background:linear-gradient(120deg,#f2f8ff,#fbfdff);box-sizing:border-box;overflow:hidden;cursor:pointer}
+body .uoya-file-picker input[type=file]{position:absolute;inset:0;z-index:2;opacity:0;width:100%;height:100%;padding:0;margin:0;border:0;cursor:pointer}
+body .uoya-file-action{flex:none;display:inline-flex;align-items:center;padding:9px 13px;border:1px solid #cee2f7;border-radius:10px;background:#e6f2ff;color:#3c7dbf;font-size:12px;font-weight:650;pointer-events:none}
+body .uoya-file-name{min-width:0;color:#7c98b3;font-size:11px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+body .uoya-file-picker:hover{border-color:#8bbbe9;background:#edf6ff}
+body .uoya-file-picker:focus-within{outline:2px solid #74b2f0;outline-offset:3px}
+body .uoya-file-picker:has(input:disabled){opacity:.5;cursor:not-allowed}
+body .uoya-file-picker input:disabled{cursor:not-allowed}
+@media(max-width:480px){body .uoya-file-picker{gap:9px;padding:9px}body .uoya-file-action{padding:8px 10px}body .uoya-file-name{font-size:10px}}
+
+body .header-actions [hidden]{display:none!important}
+body .admin-console{width:min(960px,95vw);height:min(760px,90dvh);box-sizing:border-box}
+body .admin-console.group-management{width:min(1120px,96vw)}
+body .house-persona textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:240px;border:1px solid #d6e6f6;border-radius:12px;padding:12px;background:#fff;color:#31587f;font:inherit;line-height:1.7}
+@media(max-width:640px){body .header{height:auto;min-height:94px;box-sizing:border-box;padding:10px 12px;gap:9px;flex-wrap:wrap;position:relative}body .header>.logo{max-width:calc(100% - 104px)}body .header .header-actions{flex:1 1 100%;gap:7px;justify-content:flex-end;flex-wrap:wrap}body .header .clock-badge{position:absolute;right:12px;top:9px;min-width:88px;padding:6px 8px}body .header .clock-badge strong{font-size:15px}body .header .soft-action{font-size:11px;padding:8px 10px}body .header .logo-mark{width:31px;height:31px}body .header .logo-text strong{font-size:17px}}
+
+@media(max-width:640px){body .header{gap:14px;min-height:99px}body .avatar-life{top:110px}}
+
+
+
+
+/* Desktop dock: all bottom elements share the input panel's inset. */
+@media(min-width:1100px){
+ body .stage{--dock-bottom:25px}
+ body .command-panel,body .life-summary,body .coordinate-pill,body .latest-message{bottom:var(--dock-bottom)}
+ body .life-summary{left:30px;width:min(18vw,240px)}
+ body .coordinate-pill{left:22%;transform:none;padding-inline:10px}
+ body .command-panel{left:28%;width:44%;min-width:0;transform:none}
+ body .latest-message{right:20px;max-width:calc(26% - 40px);min-width:0}
+}
+
+/* Align the scene's top panels and bottom message dock. */
+@media(min-width:701px){
+ body .avatar-life{position:absolute;top:27px}
+ body .right-column{top:27px}
+ body .command-panel,body .latest-message{bottom:var(--dock-bottom,25px)}
+}
+@media(min-width:701px) and (max-width:980px){
+ body .avatar-life,body .right-column{top:12px}
+ body .stage{--dock-bottom:17px}
+}
+
+/* Composer controls share the white input container radius. */
+body #command-form > #command-attach,body #command-form > #send-command{border-radius:inherit}
+
+/* Center SVG controls independently of font metrics and whitespace nodes. */
+body #command-form > #command-attach,body #command-form > #send-command{display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1}
+body #command-form > button > .uoya-icon{display:block;margin:0;vertical-align:initial}
+
+/* Group management: clear header actions and compact member cards. */
+body .admin-console.group-management>header{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 24px}
+body .group-management>header>div{display:flex;align-items:center;gap:16px;flex-shrink:0}
+body .group-management>header [data-join]{min-height:40px;padding:9px 15px;white-space:nowrap}
+body .group-management>header [data-close]{display:grid;place-items:center;width:40px;height:40px;min-width:40px;padding:0;flex:none}
+body .group-management .group-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 130px auto;gap:12px;margin-bottom:14px}
+body .group-management .group-toolbar input,body .group-management .group-toolbar select{width:100%;height:44px}
+body .group-management .group-toolbar button{height:44px;padding:9px 16px}
+body .group-management [data-summary]{margin:0 0 18px;font-size:12px}
+body .group-management [data-members]{display:grid;gap:12px}
+body .group-management .group-member{grid-template-columns:minmax(140px,1.1fr) minmax(115px,.85fr) minmax(185px,1.25fr) minmax(155px,1fr);gap:20px;padding:18px;border:1px solid #dfeaf6;border-radius:16px;background:#fff;align-items:start}
+body .group-management .group-identity{gap:11px}
+body .group-management .group-avatar{width:38px;height:38px;border-radius:12px}
+body .group-management .group-usage{padding-top:2px;line-height:1.5}
+body .group-management .group-quota{grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:8px}
+body .group-management .group-quota label{font-size:12px;gap:8px}
+body .group-management .group-quota input{height:40px;padding:8px 10px}
+body .group-management .group-quota button{height:40px;padding:8px 10px;white-space:nowrap;font-size:12px}
+body .group-management .group-actions{gap:8px}
+body .group-management .group-actions select{height:40px;padding:8px 10px}
+body .group-management .group-actions button{min-height:36px;padding:7px 12px;font-size:12px}
+@media(max-width:960px){
+ body .group-management .group-member{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 24px}
+ body .group-management .group-actions{align-self:end}
+}
+@media(max-width:540px){
+ body .admin-console.group-management>header{padding:14px;gap:12px}
+ body .group-management>header strong{font-size:16px}
+ body .group-management>header>div{gap:12px}
+ body .group-management>header [data-join]{font-size:11px;padding:8px 10px}
+ body .group-management>header [data-close]{width:36px;height:36px;min-width:36px}
+ body .admin-console.group-management .group-body{padding:14px}
+ body .group-management .group-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+ body .group-management .group-toolbar input{grid-column:1/-1}
+ body .group-management .group-member{padding:14px;gap:16px 12px}
+ body .group-management .group-quota,body .group-management .group-actions{grid-column:1/-1}
+ body .group-management .group-actions select{width:auto;flex:1;min-width:110px}
+}
+
+/* Latest message can collapse without affecting incoming messages. */
+body .latest-message-heading>strong{flex:1;min-width:0}
+body .latest-message-toggle{display:grid;place-items:center;width:32px;height:32px;min-width:32px;padding:0;margin-left:8px;border:1px solid #cddff3;border-radius:10px;background:#eff6ff;color:#397ec6;cursor:pointer}
+body .latest-message-toggle svg{width:18px;height:18px;transition:transform .15s}
+body .latest-message[data-collapsed=true] .latest-message-heading{margin-bottom:0;padding-bottom:0;border-bottom:0}
+body .latest-message[data-collapsed=true] .latest-message-toggle svg{transform:rotate(180deg)}
+body .latest-message-content[hidden]{display:none}
+@media(pointer:coarse){body .latest-message-toggle{width:40px;height:40px;min-width:40px}}
+
+body .memory-reset-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin:18px 0;padding:16px;border:1px solid #dfeaf6;border-radius:14px;background:#fff}body .memory-reset-panel>div{flex:1;min-width:180px}body .memory-reset-panel p{font-size:12px;line-height:1.7;color:#6b86a2;margin:6px 0 0}body .memory-reset-panel button{color:#b34e60;border-color:#efccd2;min-height:40px}body .memory-reset-panel>[role=status]{flex-basis:100%}
