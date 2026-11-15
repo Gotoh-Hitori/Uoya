@@ -20,7 +20,7 @@ async function api(url,{method='GET',body}={}){
   if(!r.ok){const error=Error(data.error||`请求失败 (${r.status})`);error.status=r.status;throw error;}
   return data;
 }
-function applyProfile(profile){if(profile?.name)document.getElementById('aiWalletName').textContent=profile.name+'的钱包';if(profile?.name)document.querySelector('.shop-section h3').textContent=profile.name+'的小商店';}
+function applyProfile(profile){if(profile?.name)document.getElementById('characterStatsTitle').textContent=profile.name+'的生活状态';if(profile?.name)document.getElementById('aiWalletName').textContent=profile.name+'的钱包';if(profile?.name)document.querySelector('.shop-section h3').textContent=profile.name+'的小商店';}
 const newId=()=>crypto.randomUUID();
 function effectMarkup(item){return Object.entries(item.effects).map(([k,v])=>`<span class="effect ${v<0?'neg':''}">${h(statMeta[k]?.label||k)} ${v>0?'+':''}${v}</span>`).join('');}
 function renderCatalog(){
@@ -37,11 +37,11 @@ function renderCatalog(){
   $('catalogGrid').querySelectorAll('[data-buy]').forEach(button=>button.onclick=()=>purchase(button.dataset.buy));
 }
 function renderStats(){
-  if(!me)return;
+  if(!me||!aiAccount)return;
   $('coinBalance').textContent=me.coins.toLocaleString();$('aiCoinBalance').textContent=aiAccount?aiAccount.coins.toLocaleString()+' 金币':'—';renderTip();
-  $('moodChip').textContent=`😊 ${me.moodLabel}`;
+  $('moodChip').textContent=`😊 ${aiAccount.moodLabel}`;
   $('statsGrid').innerHTML=Object.entries(statMeta).map(([key,s])=>{
-    const val=Math.round(me.stats[key]);
+    const val=Math.round(aiAccount.stats[key]);
     return `<div class="stat-card"><div class="stat-top"><span>${s.label}</span><span class="stat-icon">${stableIcon(({mood:'heart',satiety:'food',hydration:'drop',boredom:'toy'})[key])}</span></div><div class="stat-number">${val}<small>/100</small></div><div class="stat-track"><div class="stat-fill" style="width:${val}%;background:${s.color}"></div></div><div class="stat-sub">${s.desc}</div></div>`;
   }).join('');
 }
