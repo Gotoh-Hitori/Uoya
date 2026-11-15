@@ -1,3 +1,5 @@
+function stableIcon(kind){return globalThis.UoyaIcons.emoji(kind);}
+const itemEmoji=item=>legacyEmoji(item);
 const $=id=>document.getElementById(id);
 const statMeta={
   mood:{label:'心情',icon:'💙',color:'#7bb2f7',desc:'越高越开心'},
@@ -5,7 +7,7 @@ const statMeta={
   boredom:{label:'无聊度',icon:'🧸',color:'#be9bfa',desc:'越低越不无聊'},
   hydration:{label:'补水度',icon:'💧',color:'#6ad1dc',desc:'记得按时喝水'},
 };
-const itemEmoji=item=>h(({gift:'🎁',food:'🍚',drink:'🥤',snack:'🍪',toy:'🧸',heart:'💙',star:'🌟'})[item?.emoji]||item?.emoji||'📦');
+const legacyEmoji=item=>h(({gift:'🎁',food:'🍚',drink:'🥤',snack:'🍪',toy:'🧸',heart:'💙',star:'🌟'})[item?.emoji]||item?.emoji||'📦');
 const cn={food:'食物',drink:'饮料',snack:'零食',toy:'小玩具'};
 let isAdmin=false;let catalog=[];let activeCategory='all',me=null,aiAccount=null,pendingTip=null,activity={events:[]},busy=false;
 const h=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -40,7 +42,7 @@ function renderStats(){
   $('moodChip').textContent=`😊 ${me.moodLabel}`;
   $('statsGrid').innerHTML=Object.entries(statMeta).map(([key,s])=>{
     const val=Math.round(me.stats[key]);
-    return `<div class="stat-card"><div class="stat-top"><span>${s.label}</span><span class="stat-icon">${h(s.icon)}</span></div><div class="stat-number">${val}<small>/100</small></div><div class="stat-track"><div class="stat-fill" style="width:${val}%;background:${s.color}"></div></div><div class="stat-sub">${s.desc}</div></div>`;
+    return `<div class="stat-card"><div class="stat-top"><span>${s.label}</span><span class="stat-icon">${stableIcon(({mood:'heart',satiety:'food',hydration:'drop',boredom:'toy'})[key])}</span></div><div class="stat-number">${val}<small>/100</small></div><div class="stat-track"><div class="stat-fill" style="width:${val}%;background:${s.color}"></div></div><div class="stat-sub">${s.desc}</div></div>`;
   }).join('');
 }
 function renderInventory(){
@@ -63,7 +65,8 @@ function renderActivity(){
 }
 function renderTip(){const disabled=busy||!me||me.coins<1;$('tipButton').disabled=disabled;$('tipAmount').disabled=disabled;const max=Math.min(100000,me?.coins||0);$('tipAmount').max=String(max);if(max>0&&$('tipAmount').valueAsNumber>max)$('tipAmount').value=String(max);}
 async function tip(event){event.preventDefault();if(busy||!me)return;const amount=$('tipAmount').valueAsNumber;if(!Number.isSafeInteger(amount)||amount<1||amount>me.coins)return toast('请输入余额范围内的整数金币',true);busy=true;if(pendingTip?.amount!==amount)pendingTip={amount,requestId:newId()};renderTip();renderCatalog();renderInventory();try{const {result}=await api('/api/life/tip',{method:'POST',body:pendingTip});pendingTip=null;notifyParent(result.event);toast('爆金币成功，已转给 AI '+amount+' 金币');await refresh();}catch(error){if(error.status)pendingTip=null;toast(error.message,true);}finally{busy=false;renderTip();renderCatalog();renderInventory();}}
-async function refresh(){
+let refreshPending=null;function refresh(){if(refreshPending)return refreshPending;refreshPending=refreshState().finally(()=>{refreshPending=null;});return refreshPending;}
+async function refreshState(){
   try{
     const [m,act,c,a]=await Promise.all([api('/api/life/me'),api('/api/life/activity'),api('/api/life/catalog'),api('/api/life/ai')]);aiAccount=a.account;catalog=c.items;
     me=m.account;activity=act;$('life-auth').hidden=true;
@@ -107,6 +110,7 @@ async function init(){
  $('filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;$('filters').querySelectorAll('button').forEach(x=>x.classList.toggle('selected',x===b));renderCatalog();});
  $('life-login').onclick=()=>{if(parent!==window)parent.postMessage({type:'bluehaven:life:login'},location.origin);else location.href='../social-chat/index.html';};
  window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:chat:profile')applyProfile(event.data.profile);if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:life:refresh')void(event.data.sessionChanged||!me?loadSession():refresh());});
- await loadSession();setInterval(()=>{if(!document.hidden)void(me?refresh():loadSession());},20000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('focus',()=>void refresh());
+ await loadSession();setInterval(()=>{if(!document.hidden)void(me?refresh():loadSession());},1000);
 }
 init().catch(error=>toast(error.message,true));

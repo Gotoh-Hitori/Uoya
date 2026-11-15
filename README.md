@@ -65,3 +65,4 @@ npm run test:network
 项目自有代码采用 [GPL-3.0-only](LICENSE)。第三方代码和素材保留各自许可，详见 [NOTICE](NOTICE) 和 [docs/licenses](docs/licenses)。其中包括 Three.js、three-vrm、LongMemory、Kenney 素材、marked 和 chat-demo-main；React Bits 衍生界面包含 Commons Clause 附加限制，角色模型也有独立使用条件，整个组合不能视为仅受 GPL 约束。
 
 角色模型：**蓝色小肥鱼 Deepseek鲸鱼娘**，制作者 **木子恶魔 / MZEM**，发布平台 **模之屋**；联系方式：[Bilibili](https://space.bilibili.com/95816706)。
+

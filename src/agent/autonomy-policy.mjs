@@ -22,7 +22,7 @@ export function chooseLocalActivity({account,catalog,policy,now=Date.now(),hour=
   const affordable=catalog.filter(i=>categories.includes(i.category)&&policy.allowedCategories.includes(i.category)&&i.price<=policy.maxSingleOrder&&account.coins-i.price>=policy.minimumBalanceAfter).sort((a,b)=>score(b)/b.price-score(a)/a.price||a.id.localeCompare(b.id));
   return affordable.length?{itemId:affordable[0].id,buy:true}:null;
  };
- const needs=[{kind:'drink',priority:(45-stats.hydration)*1.5,needed:stats.hydration<45},{kind:'eat',priority:(45-stats.satiety)*1.4,needed:stats.satiety<45}].filter(n=>n.needed).sort((a,b)=>b.priority-a.priority);
+ const needs=[{kind:'drink',priority:(60-stats.hydration)*1.5,needed:stats.hydration<60},{kind:'eat',priority:(60-stats.satiety)*1.4,needed:stats.satiety<60}].filter(n=>n.needed).sort((a,b)=>b.priority-a.priority);
  for(const need of needs){if(!ready(need.kind))continue;const item=resource(need.kind);if(item)return {...LOCAL_ACTIVITIES[need.kind],kind:need.kind,...item,reason:need.kind==='drink'?'补水度偏低，优先补水':'饱食度偏低，优先进食'};}
  const candidates=[];
  if((hour>=23||hour<7)&&ready('sleep'))candidates.push({kind:'sleep',score:75,reason:'夜间作息，先休息一会儿'});

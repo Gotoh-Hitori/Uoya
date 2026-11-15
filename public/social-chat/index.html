@@ -17,7 +17,7 @@
 <script src="/ui/icons.js"></script>
 <link rel="stylesheet" href="/ui/select.css">
 <script defer src="/ui/select.js"></script>
-<link rel="stylesheet" href="./chat-components.css"></head>
+<link rel="stylesheet" href="./chat-components.css"><link rel="stylesheet" href="/ui/auth-windows.css"></head>
 <body>
   <div class="ambient-glow glow-a"></div>
   <div class="ambient-glow glow-b"></div>
@@ -31,8 +31,8 @@
       <div class="chat-scroll" id="chatScroll">
         <div class="history-actions"><button id="loadMore" class="small-button hidden">加载更早消息</button></div>
         <button id="newMessageJump" class="new-message-button hidden" type="button">查看最新消息 ↓</button><div id="messages" class="messages" aria-live="polite" aria-relevant="additions"></div>
-        <div id="typing" class="typing-line hidden"><div class="mini-ai-icon">✳</div><span class="typing-copy"><b id="typingName">AI</b> 正在思考<span class="typing-dots"><i></i><i></i><i></i></span></span></div>
-        <div id="streaming" class="stream-bubble hidden"><div class="mini-ai-icon">✳</div><div><span class="stream-name">AI · 正在回复</span><div id="streamText"></div><div class="stream-controls"><button id="stopReply" type="button" class="small-button hidden">停止回复</button><span id="streamNotice" class="stream-notice"></span></div></div></div>
+        <div id="typing" class="typing-line hidden"><div class="mini-ai-icon"></div><span class="typing-copy"><b id="typingName">AI</b> 正在思考<span class="typing-dots"><i></i><i></i><i></i></span></span></div>
+        <div id="streaming" class="stream-bubble hidden"><div class="mini-ai-icon"></div><div><span class="stream-name">AI · 正在回复</span><div id="streamText"></div><div class="stream-controls"><button id="stopReply" type="button" class="small-button hidden">停止回复</button><span id="streamNotice" class="stream-notice"></span></div></div></div>
       </div>
       <div class="composer-area"><div id="mediaDrafts" class="uoya-media-drafts" hidden></div><form id="composer" class="composer"><textarea id="messageInput" rows="2" maxlength="2000" placeholder="和大家说点什么…" aria-label="发送到共享客厅"></textarea><div class="compose-controls"><button type="button" class="small-button" id="mediaAttach" aria-label="上传图片或视频">＋</button><button id="voiceInput" type="button" class="small-button" aria-label="语音输入">语音</button><button id="cancelVoice" type="button" class="small-button" hidden>取消</button><span id="voiceStatus" class="voice-status" role="status"></span><button type="submit" class="send-button" id="sendButton" title="发送消息">发送 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></form></div>
     </main>
@@ -41,7 +41,7 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   <div class="modal-backdrop" id="authOverlay">
-    <section class="auth-modal" aria-label="登录或注册"><div class="auth-symbol">✳</div><div class="eyebrow">Uoya</div><h2>一起开始对话<span>。</span></h2><div class="auth-tabs"><button type="button" id="loginTab" class="selected">登录</button><button type="button" id="registerTab">加入空间</button></div><form id="authForm"><label>用户名<input id="authUsername" required autocomplete="username" minlength="3" maxlength="24" placeholder="3-24 位英文字母/数字" /></label><label id="displayNameGroup" class="hidden">显示昵称<input id="authDisplayName" maxlength="30" placeholder="大家怎么称呼你？" /></label><label>密码<input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="至少 8 位" /></label><label id="joinQuestionGroup" class="hidden"><span id="joinQuestion"></span><input id="joinAnswer" maxlength="1000" autocomplete="off"></label><label id="joinNoteGroup" class="hidden">申请说明（可选）<input id="joinNote" maxlength="1000"></label><div class="auth-error" id="authError"></div><button type="submit" class="auth-submit" id="authSubmit">进入聊天室 <span>→</span></button></form></section>
+    <section class="auth-modal" aria-label="登录或注册"><div class="eyebrow">Uoya</div><h2>一起开始对话<span>。</span></h2><div class="auth-tabs"><button type="button" id="loginTab" class="selected">登录</button><button type="button" id="registerTab">加入空间</button></div><form id="authForm"><label>用户名<input id="authUsername" required autocomplete="username" minlength="3" maxlength="24" placeholder="3-24 位英文字母/数字" /></label><label id="displayNameGroup" class="hidden">显示昵称<input id="authDisplayName" maxlength="30" placeholder="大家怎么称呼你？" /></label><label>密码<input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="至少 8 位" /></label><label id="joinQuestionGroup" class="hidden"><span id="joinQuestion"></span><input id="joinAnswer" maxlength="1000" autocomplete="off"></label><label id="joinNoteGroup" class="hidden">申请说明（可选）<input id="joinNote" maxlength="1000"></label><div class="auth-error" id="authError"></div><button type="submit" class="auth-submit" id="authSubmit">进入聊天室 <span>→</span></button></form></section>
   </div>
   <dialog id="personaDialog" class="persona-dialog"><form method="dialog" class="persona-editor"><div class="persona-head"><div><div class="eyebrow">AI PERSONALITY</div><h2>角色设定</h2></div><button value="cancel" class="dialog-close" aria-label="关闭">×</button></div><textarea id="personaText" spellcheck="false"></textarea><div class="dialog-actions"><span id="personaStatus"></span><button type="submit" class="small-button">取消</button><button type="button" id="savePersona" class="auth-submit">保存人格设定</button></div></form></dialog>
 </body>

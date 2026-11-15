@@ -64,7 +64,7 @@ function appendMessage(message,{prepend=false,announce=true}={}) {
   const ai=message.role==='ai';
   const row=create('article','msg'+(mine?' mine':'')+(ai?' ai-message':''));
   row.dataset.id=String(message.id);
-  const avatar=create('div','msg-avatar'+(ai?' ai':'') ,ai?'✳':userInitial(message.author?.displayName));
+  const avatar=create('div','msg-avatar'+(ai?' ai':'') ,ai?'AI':userInitial(message.author?.displayName));
   if(ai)paintAvatar(avatar);
   if(!ai){avatar.style.background=avatarColor(message.author?.username);paintMemberAvatar(avatar,message.author);}
   const main=create('div','msg-main');
@@ -99,7 +99,7 @@ function renderMemory(memory=state.memory){
  if(!memory)return;
  state.memory=memory;
 }
-function paintAvatar(el){el.replaceChildren();if(state.profile?.avatarUrl){const img=document.createElement('img');img.src=state.profile.avatarUrl;img.alt=state.profile.name;img.referrerPolicy='no-referrer';img.onerror=()=>{el.textContent='✳';};el.append(img);}else el.textContent='✳';}
+function paintAvatar(el){el.replaceChildren();if(state.profile?.avatarUrl){const img=document.createElement('img');img.src=state.profile.avatarUrl;img.alt=state.profile.name;img.referrerPolicy='no-referrer';img.onerror=()=>{el.textContent='AI';};el.append(img);}else el.textContent='AI';}
 function renderProfile() {
   const p=state.profile||{};
   $('#typingName').textContent=p.name||'AI';

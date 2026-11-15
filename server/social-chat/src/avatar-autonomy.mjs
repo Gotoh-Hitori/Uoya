@@ -26,7 +26,7 @@ export function createAvatarAutonomy({life,config,memory=null,readPersona=()=>''
   const points=Array.isArray(body.path)?body.path.slice(0,12).filter(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&world.isWalkable(p.x,p.z)).map(p=>({x:p.x,z:p.z})):[];
   live={epoch:motionEpoch,seq:++motionSeq,position:{...state.position},heading:state.heading,moving:body.moving===true,path:points,activity,controllerClientId,mode,at:now()};onMotion({...live,position:{...live.position},path:live.path.map(p=>({...p}))});return live;
  }
- function updatePosition(body,lease){const p=body.position;if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.z)||!world.isWalkable(p.x,p.z))return false;const elapsed=Math.max(.05,(now()-(lease.lastHeartbeat??now()-1000))/1000);if(Math.hypot(p.x-state.position.x,p.z-state.position.z)>Math.max(1,elapsed*2.2))return false;state.position={x:p.x,z:p.z};if(Number.isFinite(body.heading))state.heading=body.heading;return true;}
+ function updatePosition(body,lease){const p=body.position;if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.z)||!world.isWalkable(p.x,p.z))return false;const elapsed=Math.max(.05,(now()-(lease.lastHeartbeat??now()-1000))/1000);if(Math.hypot(p.x-state.position.x,p.z-state.position.z)>Math.max(1,elapsed*3.6))return false;state.position={x:p.x,z:p.z};if(Number.isFinite(body.heading))state.heading=body.heading;return true;}
  function tick(){
   if(state.manualLease&&state.manualLease.until<=now()){state.manualLease=null;emitMotion({},'idle');persist();}
   if(state.lease&&state.lease.until<=now()){state.lease=null;emitMotion({},'idle');if(['walking','acting'].includes(state.plan?.phase)){state.plan.phase='planned';state.plan.arrivedAt=null;}persist();}

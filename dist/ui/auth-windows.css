@@ -1,0 +1,29 @@
+/* Uoya account windows — shared with chat and daily life. */
+body #authOverlay,body #life-auth{background:radial-gradient(ellipse at 12% 12%,#dcecffaa,transparent 52%),radial-gradient(ellipse at 96% 90%,#dce9fa99,transparent 48%),#f4f8fd;backdrop-filter:blur(18px);padding:32px 20px;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain}
+body #authOverlay .auth-modal,body #life-auth>section{width:min(440px,100%);max-width:440px;flex:none;min-width:0;box-sizing:border-box;padding:44px 36px 32px;margin:auto;border:1px solid #fff;border-radius:28px;background:linear-gradient(155deg,#ffffff 60%,#f8fbff);box-shadow:0 24px 75px -30px #5c87b54d,0 0 0 1px #dce7f499;position:relative;text-align:left;overflow:hidden}
+body #authOverlay .auth-modal:before,body #life-auth>section:before{content:'';position:absolute;top:0;left:36px;width:42px;height:3px;background:#609fea;border-radius:0 0 4px 4px}
+body #authOverlay .eyebrow,body #life-auth .auth-eyebrow{font:700 10px/1.5 system-ui,sans-serif;letter-spacing:3px;text-transform:uppercase;color:#6595cb;margin:0 0 14px}
+body #authOverlay .auth-modal h2,body #life-auth h2{color:#233e60;font-size:29px;font-weight:750;line-height:1.4;letter-spacing:-1px;margin:0 0 28px}
+body #authOverlay .auth-modal h2 span{color:#6aa7ec}
+body #authOverlay .auth-tabs{border:1px solid #e8eff8;border-radius:14px;background:#eff4fa;padding:4px;gap:4px;margin-bottom:28px}
+body #authOverlay .auth-tabs button{padding:11px 8px;font-size:13px;font-weight:650;border-radius:10px;color:#8ba0b9;transition:background .18s,color .18s,box-shadow .18s}
+body #authOverlay .auth-tabs button.selected{background:white;color:#357aca;box-shadow:0 2px 7px #7598bc14}
+body #authOverlay #authForm label{font-size:12px;font-weight:650;color:#617b98;margin:0 0 18px;line-height:1.6}
+body #authOverlay #authForm input{width:100%;min-width:0;height:48px;margin-top:8px;padding:12px 14px;box-sizing:border-box;border:1px solid #dce6f3;border-radius:12px;background:#f9fbfe;color:#29496b;font-size:14px;font-weight:450;line-height:1.4;box-shadow:inset 0 1px 2px #d9e5f211;transition:border-color .18s,box-shadow .18s,background .18s}
+body #authOverlay #authForm input::placeholder{color:#a1b1c5;font-size:13px;font-weight:400}
+body #authOverlay #authForm input:focus{outline:none;border-color:#84b2e8;background:#fff;box-shadow:0 0 0 3px #8dbaf218}
+body #authOverlay .auth-error{font-size:12px;line-height:1.5;min-height:18px;margin:2px 0 12px;color:#c66b7b;overflow-wrap:anywhere}
+body #authOverlay #authSubmit,body #life-auth #life-login{width:100%;min-height:48px;margin:0;box-sizing:border-box;padding:13px 18px;border:1px solid #5598e8;border-radius:13px;background:linear-gradient(115deg,#4588dc,#64a1eb);color:#fff;font-size:14px;font-weight:650;line-height:1.5;letter-spacing:.2px;box-shadow:0 8px 18px -8px #3b7fd287;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:filter .18s,transform .18s;position:relative;bottom:auto}
+body #authOverlay #authSubmit:hover,body #life-auth #life-login:hover{filter:brightness(1.04);transform:translateY(-1px)}
+body #authOverlay #authSubmit:disabled{opacity:.65;transform:none;cursor:wait}
+body #authOverlay #authSubmit span{margin-left:auto}
+body #life-auth{display:flex;align-items:center;justify-content:center}
+body #life-auth[hidden]{display:none}
+body #life-auth>section{padding:44px 36px 36px;text-align:left}
+body #life-auth .auth-caption{font-size:13px;line-height:1.8;color:#8b9eb5;margin:-12px 0 28px}
+body #life-auth #life-login{justify-content:space-between}
+@media(max-width:520px){body #authOverlay,body #life-auth{padding:24px 16px max(24px,env(safe-area-inset-bottom))}body #authOverlay .auth-modal,body #life-auth>section{padding:34px 25px 26px;border-radius:24px}body #authOverlay .auth-modal h2,body #life-auth h2{font-size:27px;margin-bottom:24px}body #authOverlay #authForm input{font-size:16px}body #authOverlay .auth-tabs{margin-bottom:24px}}
+@media(max-height:620px){body #authOverlay{align-items:flex-start}body #authOverlay .auth-modal{margin-block:auto;padding-top:26px;padding-bottom:24px}body #authOverlay .auth-modal h2{margin-bottom:18px;font-size:25px}body #authOverlay .auth-tabs{margin-bottom:20px}body #authOverlay #authForm label{margin-bottom:14px}}
+@media(prefers-reduced-motion:reduce){body #authOverlay *,body #life-auth *{animation:none!important;transition:none!important}}
+body #authOverlay #authSubmit{justify-content:center}body #authOverlay #authSubmit span{margin-left:0}
+body #authOverlay #authSubmit,body #life-auth #life-login,body .auth-submit{justify-content:center;text-align:center;gap:12px}body #authOverlay #authSubmit>*,body #life-auth #life-login>*,body .auth-submit>*{margin-left:0;margin-right:0;flex:0 0 auto}

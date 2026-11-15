@@ -33,6 +33,7 @@ export function createSocialChat({onReply=()=>{},onOpen=()=>{},onLifeEvent=()=>{
  async function ensureSession(){const {user}=await request('/me');if(sessionUserId&&sessionUserId!==user.id){closeStream();onReset();}sessionUserId=user.id;return user;}
  async function syncSession(){try{await ensureSession();await connect();}catch(error){if(error.status===401){closeStream();onReset();}}}
  void syncSession();setInterval(()=>{if(!document.hidden)void syncSession();},30000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void syncSession();});
  window.addEventListener('beforeunload',closeStream);
  function open(text=''){
   onOpen();if(!dialog.open)dialog.showModal();

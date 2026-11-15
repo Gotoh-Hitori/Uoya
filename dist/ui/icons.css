@@ -1,5 +1,5 @@
 .uoya-icon{width:1.2em;height:1.2em;display:inline-block;vertical-align:-.2em;flex-shrink:0;pointer-events:none}
-button>.uoya-icon:only-child{display:block;margin:auto;width:20px;height:20px}
+button>.uoya-icon:only-child{display:inline-block;margin:0;width:20px;height:20px}
 .product-emoji>.uoya-icon{width:32px;height:32px;color:#4a85c9}
 .inventory-icon>.uoya-icon{width:24px;height:24px;color:#4a85c9}
 .stat-icon>.uoya-icon{width:23px;height:23px}
@@ -7,3 +7,5 @@ button>.uoya-icon:only-child{display:block;margin:auto;width:20px;height:20px}
 .agent-icon>.uoya-icon,.mini-ai-icon>.uoya-icon,.msg-avatar.ai>.uoya-icon{width:24px;height:24px}
 .coin-medallion>.uoya-icon{width:27px;height:27px}
 #send-command>.uoya-icon,#command-attach>.uoya-icon{width:24px;height:24px}
+
+img.uoya-icon{display:inline-block;object-fit:contain;vertical-align:middle;image-rendering:pixelated;width:1.35em;height:1.35em;flex-shrink:0}.product-emoji img.uoya-icon,.inventory-icon img.uoya-icon{width:40px;height:40px}
