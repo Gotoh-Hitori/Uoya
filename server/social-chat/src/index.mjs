@@ -1,3 +1,4 @@
+import {createUpdateControl} from './auto-update.mjs';
 import {readRecording,transcribeRecording,createSpeechBudget} from './speech.mjs';
 import {createChatUploads} from './uploads.mjs';
 import {createGroupManagement} from './group-management.mjs';
@@ -21,6 +22,7 @@ import { createDB, tokenHash } from './db.mjs';
 import { createAiWorker, requestTts } from './ai.mjs';
 
 const config = loadConfig();
+const updates=createUpdateControl(config);
 const db = createDB(config.dbFile);
 try{initializeAdmin(db,process.env);}catch(error){db.close();throw error;}
 const membership=createMembership({config,db});
@@ -224,6 +226,12 @@ const server = http.createServer(async (req,res) => {
      else return failure(res,405,'请求方式不支持');
      broadcast('ai_settings_changed',{});
      return sendJson(res,200,result);
+    }
+    if(pathname==='/api/admin/updates'){
+      const me=requireAuth(req,res);if(!me)return;if(me.role!=='admin')return failure(res,403,'仅空间管理员可设置自动更新');
+      if(req.method==='GET')return sendJson(res,200,updates.status());
+      if(req.method==='PUT')return sendJson(res,200,updates.configure(me,await readJson(req,4096)));
+      return failure(res,405,'请求方式不支持');
     }
      if(pathname.startsWith('/api/admin/console/')){
      const me=requireAuth(req,res);if(!me)return;if(me.role!=='admin')return failure(res,403,'仅空间管理员可用');

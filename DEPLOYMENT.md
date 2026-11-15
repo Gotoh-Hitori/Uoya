@@ -168,3 +168,13 @@ docker compose down はボリュームを保持します。明示的な削除許
 npm ci → npm run build → ルート .env 設定 → npm start の順です。本番が既定で、管理者初期化情報は必須です。npm run dev の開発初期化は NODE_ENV=development を明示し、API をループバックに限定した場合のみで、公開用途には使用しません。npm run preview はフロントエンドだけです。
 
 管理者エラーは環境変数、CA エラーは PEM・CA 属性・有効期限、x509 は発行元・SAN・検証名・時刻、HTTPS 発行は DNS と 443 TLS-ALPN-01 を確認します。データが見えない場合はアカウントを作り直す前にプロジェクト名とボリュームを確認します。共有ログは秘密情報を除去し、実 VPS/AI を検証できない場合は未検証と明記してください。
+
+## 试验性 Docker 自动更新
+
+先执行 `docker compose --profile auto-update up -d --build updater`，再在控制台“运行情况”开启“自动更新”并单独确认风险。开关默认关闭，仅管理员可修改；每分钟检查固定仓库 Gotoh-Hitori/Uoya 的 main 提交，按提交号而非package版本号判断更新。更新服务需连接GitHub。
+
+更新服务独立持有Docker socket，用于重建和替换同一Compose项目的app容器；仅应由可信管理员部署，不把socket挂到游戏容器。依赖Linux Docker Engine/Docker Desktop Linux容器及Compose。请保持原部署目录与Compose项目名，原.env.docker由原Compose读取，不提交密钥。自定义外部数据库/额外挂载不在此自动迁移支持范围。
+
+构建成功后才停止app，将原app_data存档完整复制到update_work卷的backups目录，再启动新版，保留同一app_data卷。新版健康检查失败会停止新版、恢复备份并切回旧镜像；同一失败版本不反复更新，关闭再开启可重试。不要删除旧镜像或备份卷。更新期间会断线，容器意外断电或回退失败仍可能需要手动从update_work备份恢复；请保留独立备份。关闭开关会取消未安装更新，已经开始安装时优先完成或回退，不能中途强停。
+
+版本识别优先读取镜像org.opencontainers.image.revision标签；未设置时读取原部署目录的Git HEAD。无Git目录的压缩包部署须在构建前设置UOYA_BUILD_REVISION为该版本完整提交SHA；无法识别时拒绝自动替换。更新代理检测到迁移过程中异常退出会关闭自动更新，要求管理员检查备份。

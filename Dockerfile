@@ -14,6 +14,8 @@ COPY server ./server
 RUN npm run memory:build && npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim
+ARG UOYA_BUILD_REVISION=unknown
+LABEL org.opencontainers.image.revision=$UOYA_BUILD_REVISION
 ENV NODE_ENV=production WEB_HOST=0.0.0.0 WEB_PORT=8080 CHAT_API_PORT=3001 DATABASE_FILE=/app/server/social-chat/data/bluehaven.sqlite PERSONA_FILE=/app/server/social-chat/data/persona.md
 WORKDIR /app
 COPY --from=build --chown=node:node /app/node_modules ./node_modules

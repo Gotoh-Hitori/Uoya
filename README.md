@@ -66,3 +66,5 @@ npm run test:network
 
 角色模型：**蓝色小肥鱼 Deepseek鲸鱼娘**，制作者 **木子恶魔 / MZEM**，发布平台 **模之屋**；联系方式：[Bilibili](https://space.bilibili.com/95816706)。
 
+
+Docker试验自动更新可在控制台“运行情况”中设置。需先运行 `docker compose --profile auto-update up -d --build updater`；开启需要额外确认。功能涉及停机、存档备份、容器重建与失败回退，具体权限、版本识别、部署及恢复方法见 [DEPLOYMENT.md](DEPLOYMENT.md)。

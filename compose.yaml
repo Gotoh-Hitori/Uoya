@@ -3,6 +3,8 @@ services:
   app:
     build:
       context: .
+      args:
+        UOYA_BUILD_REVISION: ${UOYA_BUILD_REVISION:-unknown}
     init: true
     restart: unless-stopped
     stop_grace_period: 30s
@@ -20,5 +22,20 @@ services:
     volumes:
       - app_data:/app/server/social-chat/data
 
+  updater:
+    profiles: [auto-update]
+    build:
+      context: .
+      dockerfile: scripts/updater.Dockerfile
+    restart: unless-stopped
+    environment:
+      UOYA_COMPOSE_PROJECT: ${COMPOSE_PROJECT_NAME:-uoya-release-v1}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/deployment:ro
+      - app_data:/data
+      - update_work:/updates
+
 volumes:
   app_data:
+  update_work:

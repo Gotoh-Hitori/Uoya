@@ -10,3 +10,5 @@
 .admin-console nav{flex-wrap:wrap}
 
 
+
+.update-switch-label{position:relative;display:inline-flex;align-items:center;cursor:pointer}.update-switch-label input{position:absolute;inset:0;opacity:0;z-index:1;cursor:pointer;width:100%;height:100%;margin:0}.update-switch-track{width:42px;height:25px;border-radius:20px;background:#d5e2f0;position:relative;transition:background .2s}.update-switch-track:after{content:"";position:absolute;width:19px;height:19px;left:3px;top:3px;background:white;border-radius:50%;box-shadow:0 1px 4px #25486b33;transition:transform .2s}.update-switch-label input:checked+.update-switch-track{background:#4c95e9}.update-switch-label input:checked+.update-switch-track:after{transform:translateX(17px)}.update-switch-label input:disabled+.update-switch-track{opacity:.5}.update-switch-label input:focus-visible+.update-switch-track{outline:2px solid #78acf0;outline-offset:3px}
