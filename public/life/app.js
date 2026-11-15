@@ -1,3 +1,4 @@
+let parentSnapshotAt=0;
 function stableIcon(kind){return globalThis.UoyaIcons.emoji(kind);}
 const itemEmoji=item=>legacyEmoji(item);
 const $=id=>document.getElementById(id);
@@ -68,7 +69,7 @@ async function tip(event){event.preventDefault();if(busy||!me)return;const amoun
 let refreshPending=null;function refresh(){if(refreshPending)return refreshPending;refreshPending=refreshState().finally(()=>{refreshPending=null;});return refreshPending;}
 async function refreshState(){
   try{
-    const [m,act,c,a]=await Promise.all([api('/api/life/me'),api('/api/life/activity'),api('/api/life/catalog'),api('/api/life/ai')]);aiAccount=a.account;catalog=c.items;
+    const [m,act,c,a]=await Promise.all([api('/api/life/me'),api('/api/life/activity'),api('/api/life/catalog'),api('/api/life/ai')]);if(performance.now()-parentSnapshotAt>2000)aiAccount=a.account;catalog=c.items;
     me=m.account;activity=act;$('life-auth').hidden=true;
     renderStats();renderCatalog();renderInventory();renderActivity();
   }catch(err){if(err.status===401){me=null;isAdmin=false;$('customItemPanel').hidden=true;$('life-auth').hidden=false;}else toast(err.message,true);}
@@ -109,7 +110,7 @@ async function init(){
  $('customItemForm').addEventListener('submit',createCustomItem);
  $('filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;$('filters').querySelectorAll('button').forEach(x=>x.classList.toggle('selected',x===b));renderCatalog();});
  $('life-login').onclick=()=>{if(parent!==window)parent.postMessage({type:'bluehaven:life:login'},location.origin);else location.href='../social-chat/index.html';};
- window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:chat:profile')applyProfile(event.data.profile);if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:life:refresh')void(event.data.sessionChanged||!me?loadSession():refresh());});
+ window.addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:life:character'&&event.data.account?.accountId==='ai:starry'){parentSnapshotAt=performance.now();aiAccount=event.data.account;renderStats();}if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:chat:profile')applyProfile(event.data.profile);if(event.origin===location.origin&&event.source===parent&&event.data?.type==='bluehaven:life:refresh')void(event.data.sessionChanged||!me?loadSession():refresh());});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('focus',()=>void refresh());
  await loadSession();setInterval(()=>{if(!document.hidden)void(me?refresh():loadSession());},1000);
 }
